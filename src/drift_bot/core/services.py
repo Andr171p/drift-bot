@@ -11,7 +11,7 @@ class NumberGenerator:
         self._end = end
 
     async def generate(self, used_numbers: Sequence[int]) -> int:
-        """Генерирует уникальный неповторяющийся номер"""
+        """Генерирует уникальный и неповторяющийся номер"""
         if len(used_numbers) >= (self._end - self._start + 1):
             raise RanOutNumbersError("Ran out of numbers")
         while True:
