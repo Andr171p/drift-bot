@@ -1,18 +1,17 @@
-from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Optional
 
 
-class PilotRepository(ABC):
-    @abstractmethod
-    async def create(self, ) -> int: pass
+T = TypeVar("T")
 
-    @abstractmethod
-    async def read(self, pilot_id: int) -> ...: pass
 
-    @abstractmethod
-    async def read_all(self, ) -> list[...]: pass
+class Repository(Generic[T]):
+    async def create(self, entity: T) -> T: pass
 
-    @abstractmethod
-    async def update(self, ) -> ...: pass
+    async def read(self, entity_id: int) -> Optional[T]: pass
 
-    @abstractmethod
-    async def delete(self, ) -> bool: pass
+    async def read_all(self) -> list[T]: pass
+
+    async def update(self, entity_id: int, **kwargs) -> Optional[T]: pass
+
+    async def delete(self, entity_id: int) -> bool: pass
+

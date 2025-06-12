@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from .constants import ATTEMPT, CRITERION
+from ..constants import ATTEMPT, CRITERION
 
 
 class Race(BaseModel):
@@ -12,7 +12,7 @@ class Race(BaseModel):
     image: Optional[bytes]  # Изображение/плакат мероприятия
     description: Optional[str]  # Описание мероприятия
     place: str  # Место проведения
-    map_link: str  # Ссылка на карты/навигатор
+    map_link: Optional[str]  # Ссылка на карты/навигатор
     date: datetime  # Дата проведения
     check_in: bool  # True если регистрация открыта, False ели закрыта или не началась
     active: bool  # True если гонка активна, False если завершилась или ещё не доступна

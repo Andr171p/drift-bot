@@ -12,6 +12,7 @@ class RaceOrm(Base):
     title: Mapped[str]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     place: Mapped[str]
+    map_link: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime)
     check_in: bool
     active: bool
