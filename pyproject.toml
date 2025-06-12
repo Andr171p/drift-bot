@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
+    "aiobotocore>=2.22.0",
     "aiogram>=3.20.0.post0",
     "aiogram-forms>=1.1.1",
+    "dishka>=1.6.0",
     "fastapi[all]>=0.115.12",
     "sqlalchemy>=2.0.41",
 ]

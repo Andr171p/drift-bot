@@ -10,6 +10,7 @@ class RaceOrm(Base):
     __tablename__ = "races"
 
     title: Mapped[str]
+    image_file: Mapped[str | None] = mapped_column(nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     place: Mapped[str]
     map_link: Mapped[str | None] = mapped_column(nullable=True)

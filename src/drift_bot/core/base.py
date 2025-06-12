@@ -1,5 +1,7 @@
 from typing import Generic, TypeVar, Optional
 
+from abc import ABC, abstractmethod
+
 
 T = TypeVar("T")
 
@@ -15,3 +17,13 @@ class Repository(Generic[T]):
 
     async def delete(self, entity_id: int) -> bool: pass
 
+
+class FileStorage(ABC):
+    @abstractmethod
+    async def upload_file(self, file_data: bytes, file_name: str, bucket_name: str) -> None: pass
+
+    @abstractmethod
+    async def download_file(self, file_name: str, bucket_name: str) -> Optional[bytes]: pass
+
+    @abstractmethod
+    async def remove_file(self, file_name: str, bucket_name: str) -> ...: pass
