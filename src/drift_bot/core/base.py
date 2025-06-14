@@ -6,16 +6,16 @@ from abc import ABC, abstractmethod
 T = TypeVar("T")
 
 
-class Repository(Generic[T]):
-    async def create(self, entity: T) -> T: pass
+class CRUDRepository(Generic[T]):
+    async def create(self, model: T) -> T: pass
 
-    async def read(self, entity_id: int) -> Optional[T]: pass
+    async def read(self, id: int) -> Optional[T]: pass
 
     async def read_all(self) -> list[T]: pass
 
-    async def update(self, entity_id: int, **kwargs) -> Optional[T]: pass
+    async def update(self, id: int, **kwargs) -> Optional[T]: pass
 
-    async def delete(self, entity_id: int) -> bool: pass
+    async def delete(self, id: int) -> bool: pass
 
 
 class FileStorage(ABC):
