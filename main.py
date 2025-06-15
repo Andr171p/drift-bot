@@ -1,35 +1,19 @@
+import logging
 import asyncio
 
-from src.drift_bot.core.services import NumberGenerator
+from aiogram import Bot
+
+from src.drift_bot.ioc import container
+from src.drift_bot.bot import create_dispatcher
 
 
 async def main() -> None:
-    used_numbers = [1, 2, 3, 4, 5, 6, 7]
-
-    number_generator = NumberGenerator(start=1, end=10)
-
-    number = await number_generator.generate(used_numbers)
-
-    print(number)
-
-    used_numbers.append(number)
-
-    number = await number_generator.generate(used_numbers)
-
-    print(number)
-
-    used_numbers.append(number)
-
-    number = await number_generator.generate(used_numbers)
-
-    print(number)
-
-    used_numbers.append(number)
-
-    number = await number_generator.generate(used_numbers)
-
-    print(number)
+    bot = await container.get(Bot)
+    dp = create_dispatcher()
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())

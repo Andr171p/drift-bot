@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -55,15 +55,15 @@ class S3Client(FileStorage):
             self,
             file_data: bytes,
             file_name: str,
-            bucket_name: str
+            bucket_name: str,
+            metadata: Optional[dict[str, Any]] = None
     ) -> None:
+        kwargs = {"Bucket": bucket_name, "Key": file_name, "Body": file_data}
+        if metadata is not None:
+            kwargs["ExtraArgs"] = metadata
         try:
             async with self._get_client() as client:
-                await client.put_object(
-                    Bucket=bucket_name,
-                    Key=file_name,
-                    Body=file_data
-                )
+                await client.put_object(**kwargs)
         except Exception as e:
             raise UploadingFileError(f"Error while uploading file: {e}") from e
 

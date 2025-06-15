@@ -12,16 +12,25 @@ class User(BaseModel):
     username: Optional[str]
     phone_number: str
     role: Literal[
-        "admin",
-        "referee",
-        "pilot"
+        "ADMIN",
+        "REFEREE",
+        "PILOT"
     ]
+
+
+class Referral(BaseModel):
+    event_id: int  # ID мероприятия
+    admin_id: int  # ID админа
+    code: str  # Реферальный код, сгенерированная админом для приглашения на мероприятие
+    expires_at: datetime  # срок истечения ссылки
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Event(BaseModel):
     title: str  # Название мероприятия
-    photo_name: Optional[str] = None  # Изображение/плакат мероприятия
     description: Optional[str] = None  # Описание мероприятия
+    image_file: Optional[str] = None  # Название файла с фото из файлового хранилища
     location: str  # Место проведения
     map_link: Optional[str] = None  # Ссылка на карты/навигатор
     date: datetime  # Дата проведения

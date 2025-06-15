@@ -35,3 +35,11 @@ class UpdatingError(RepositoryError):
 
 class DeletingError(RepositoryError):
     pass
+
+
+class ServiceError(Exception):
+    pass
+
+
+class EventCreationError(ServiceError):
+    pass

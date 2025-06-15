@@ -1,15 +1,15 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Any
+from collections.abc import AsyncGenerator
 
 import random
+from uuid import uuid4
 
-from .domain import Race
-from .dto import RaceCreation, CreatedRace, RaceRefactoring
-from .base import FileStorage, CRUDRepository
-from .exceptions import (
-    RanOutNumbersError,
-    CreationError,
-    UploadingFileError
-)
+from .domain import Event
+from .dto import CreatedEvent, ReceivedEvent
+from .base import EventRepository, FileStorage
+from .exceptions import RanOutNumbersError
+
+from ..constants import EVENT_BUCKET, SUPPORTED_IMAGE_FORMATS
 
 
 class NumberGenerator:
@@ -27,30 +27,63 @@ class NumberGenerator:
                 return number
 
 
-class RaceService:
+class EventService:
     def __init__(
             self,
-            race_repository: CRUDRepository[Race],
+            event_repository: EventRepository,
             file_storage: FileStorage
     ) -> None:
-        self._race_repository = race_repository
+        self._event_repository = event_repository
         self._file_storage = file_storage
 
-    async def create_race(self, race_creation: RaceCreation) -> Optional[CreatedRace]:
-        race = Race.model_validate(race_creation)
-        try:
-            created_race = self._race_repository.create(race)
-        except CreationError:
-            return None
-        try:
+    async def create_event(
+            self,
+            event: Event,
+            image: Optional[bytes] = None,
+            image_format: Optional[str] = None
+    ) -> Optional[CreatedEvent]:
+        if image_format not in SUPPORTED_IMAGE_FORMATS:
+            raise ValueError("Unsupported image format")
+        if image:
+            image_file = f"{uuid4()}.{image_format}"
             await self._file_storage.upload_file(
-                file_data=race_creation.image,
-                file_name=race_creation.image_file_name,
-                bucket_name="races"
+                file_data=image,
+                file_name=image_file,
+                bucket_name=EVENT_BUCKET
             )
-        except UploadingFileError:
-            return None
-        return created_race
+            event.image_file = image_file
+        created_event = await self._event_repository.create(event)
+        return created_event
 
-    async def refactor_race(self, race_id: int, race_refactoring: RaceRefactoring) -> CreatedRace:
-        updated_race = await self._race_repository.update(race_id, **race_refactoring.model_dump())
+    async def delete_event(self, event_id: int) -> bool:
+        event = await self._event_repository.read(event_id)
+        if event.image_file is not None:
+            await self._file_storage.remove_file(
+                file_name=event.image_file,
+                bucket_name=EVENT_BUCKET
+            )
+        is_deleted = await self._event_repository.delete(event_id)
+        return is_deleted
+
+    async def get_events(self, page: int, limit: int) -> AsyncGenerator[ReceivedEvent, Any]:
+        events = await self._event_repository.paginate(page, limit)
+        for event in events:
+            image: Optional[bytes] = None
+            if event.image_file:
+                image = await self._file_storage.download_file(
+                    file_name=event.image_file,
+                    bucket_name=EVENT_BUCKET
+                )
+            received_event = ReceivedEvent(**event.model_dump(), image=image)
+            yield received_event
+
+    async def get_last_event(self) -> Optional[ReceivedEvent]:
+        events = await self._event_repository.read_all()
+        last_event = events[-1]
+        image: Optional[bytes] = None
+        if last_event.image_file:
+            image = await self._file_storage.download_file(
+                file_name=last_event.image_file,
+                bucket_name=EVENT_BUCKET
+            )
+        return ReceivedEvent(**last_event.model_dump(), image=image)
