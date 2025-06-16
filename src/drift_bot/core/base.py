@@ -23,6 +23,8 @@ class CRUDRepository(Generic[T]):
 class EventRepository(CRUDRepository[Event]):
     async def paginate(self, page: int, limit: int) -> list[Event]: pass
 
+    async def get_last(self) -> Event: pass
+
 
 class FileStorage(ABC):
     @abstractmethod

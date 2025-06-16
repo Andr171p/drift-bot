@@ -74,10 +74,9 @@ class EventService:
             yield received_event
 
     async def get_last_event(self) -> Optional[ReceivedEvent]:
-        events = await self._event_repository.read_all()
-        last_event = events[-1]
+        last_event = await self._event_repository.get_last()
         photo: Optional[bytes] = None
-        if last_event.image_file:
+        if last_event.photo_name:
             photo = await self._file_storage.download_file(
                 file_name=last_event.image_file,
                 bucket_name=EVENT_BUCKET

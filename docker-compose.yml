@@ -9,8 +9,8 @@ services:
     volumes:
       - ./.docker/minio-data:/data       # Локальная папка для хранения данных
     ports:
-      - "9000:9000"              # S3 API (для SDK и CLI)
-      - "9001:9001"              # Web Console (UI)
+      - "9990:9000"              # S3 API (для SDK и CLI)
+      - "9991:9001"              # Web Console (UI)
     restart: unless-stopped
 
   postgres:

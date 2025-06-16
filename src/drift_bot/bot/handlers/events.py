@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from aiogram import F, Router
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 
@@ -76,23 +76,25 @@ async def enter_event_date(message: Message, state: FSMContext) -> None:
     🗓 <b>Дата:</b> {date.strftime('%d.%m.%Y %H:%M')}
     """
     await message.answer_photo(
-        photo=data["photo_file"],
+        photo=data["photo_id"],
         caption=text,
         parse_mode=ParseMode.HTML,
+    )
+    await message.answer(
+        text="Подтвердите создание мероприятия (Да/нет): ",
         reply_markup=confirm_event_creation_kb()
     )
-    await message.answer("Подтвердите создание мероприятия (Да/нет): ")
 
 
-@events_router.message(ConfirmCallback.filter(F.confirmation == Confirmation.NO))
-async def cancel_event_creation(message: Message, state: FSMContext) -> None:
+@events_router.callback_query(ConfirmCallback.filter(F.confirmation == Confirmation.NO))
+async def cancel_event_creation(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    await message.answer("❌ Создание отменено.")
+    await call.answer("❌ Создание отменено.")
 
 
-@events_router.message(ConfirmCallback.filter(F.confirmation == Confirmation.YES))
+@events_router.callback_query(ConfirmCallback.filter(F.confirmation == Confirmation.YES))
 async def create_event(
-        message: Message,
+        call: CallbackQuery,
         state: FSMContext,
         event_service: Depends[EventService]
 ) -> None:
@@ -104,8 +106,8 @@ async def create_event(
         map_link=data["map_link"],
         date=data["date"]
     )
-    photo_file = await message.bot.get_file(file_id=data["photo_id"])
-    photo_data = await message.bot.download(file=photo_file)
+    photo_file = await call.bot.get_file(file_id=data["photo_id"])
+    photo_data = await call.bot.download(file=photo_file)
     photo_format = photo_file.file_path.split(".")[-1].lower()
     await event_service.create_event(event, photo_data=photo_data.read(), photo_format=photo_format)
-    await message.answer("✅ Мероприятие создано!")
+    await call.answer("✅ Мероприятие создано!")

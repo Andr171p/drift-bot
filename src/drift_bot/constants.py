@@ -1,6 +1,6 @@
 from typing import Literal
 
-from enum import Enum, auto
+from enum import StrEnum
 from pathlib import Path
 
 
@@ -10,19 +10,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
 
-class Role(Enum, str):
+class Role(StrEnum):
     """Возможные роли пользователей"""
-    ADMIN = auto()      # Администратор
-    REFEREE = auto()    # Судья
-    PILOT = auto()      # Пилот, участник гонки
-    DEVELOPER = auto()  # Доступен весь контент (используется для отладки)
+    ADMIN = "ADMIN"          # Администратор
+    REFEREE = "REFEREE"      # Судья
+    PILOT = "PILOT"          # Пилот, участник гонки
+    DEVELOPER = "DEVELOPER"  # Доступен весь контент (используется для отладки)
 
 
-class Criterion(Enum, str):
+class Criterion(StrEnum):
     """Судейские критерии"""
-    STYLE = auto()  # Стиль
-    ANGLE = auto()  # Угол
-    LINE = auto()   # Траектория
+    STYLE = "STYLE"  # Стиль
+    ANGLE = "ANGLE"  # Угол
+    LINE = "LINE"    # Траектория
 
 
 # Разрешённое количество попыток

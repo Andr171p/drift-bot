@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ParseMode(Enum, str):
+class ParseMode(StrEnum):
     HTML = "HTML"
 
 
-class Confirmation(Enum, str):
+class Confirmation(StrEnum):
     YES = "yes"
     NO = "no"

@@ -16,7 +16,10 @@ class UserOrm(Base):
     referrals: Mapped[list["ReferralOrm"]] = relationship(back_populates="user")
 
     __table_args__ = (
-        CheckConstraint("role IN ('ADMIN', 'REFEREE', 'PILOT')", "check_role"),
+        CheckConstraint(
+            "role IN ('ADMIN', 'REFEREE', 'PILOT', 'DEVELOPER')",
+            "check_role"
+        ),
     )
 
 
@@ -45,10 +48,11 @@ class EventOrm(Base):
 
     title: Mapped[str]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    place: Mapped[str]
+    photo_name: Mapped[str | None] = mapped_column(unique=True, nullable=True)
+    location: Mapped[str]
     map_link: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime)
-    active: bool
+    active: Mapped[bool]
 
     referees: Mapped[list["RefereeOrm"]] = relationship(back_populates="event")
     pilots: Mapped[list["PilotOrm"]] = relationship(back_populates="event")
@@ -76,6 +80,7 @@ class PilotOrm(Base):
     full_name: Mapped[str]
     age: Mapped[int]
     description: Mapped[str] = mapped_column(Text)
+    photo_name: Mapped[str] = mapped_column(unique=True)
     car: Mapped[str]
     number: Mapped[int]
 
