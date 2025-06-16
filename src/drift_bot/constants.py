@@ -1,5 +1,6 @@
 from typing import Literal
 
+from enum import Enum, auto
 from pathlib import Path
 
 
@@ -9,14 +10,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
 
+class Role(Enum, str):
+    """Возможные роли пользователей"""
+    ADMIN = auto()      # Администратор
+    REFEREE = auto()    # Судья
+    PILOT = auto()      # Пилот, участник гонки
+    DEVELOPER = auto()  # Доступен весь контент (используется для отладки)
+
+
+class Criterion(Enum, str):
+    """Судейские критерии"""
+    STYLE = auto()  # Стиль
+    ANGLE = auto()  # Угол
+    LINE = auto()   # Траектория
+
+
 # Разрешённое количество попыток
 ATTEMPT = Literal[1, 2]
-
-CRITERION = Literal[
-    "STYLE",  # Судья стиля
-    "ANGLE",  # Судья угла
-    "LINE"  # Судья траектории
-]
 
 # URL бота
 BOT_NAME = "DriftBot_bot"

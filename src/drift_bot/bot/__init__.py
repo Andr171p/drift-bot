@@ -2,4 +2,4 @@ __all__ = (
     "create_dispatcher"
 )
 
-from .bot import create_dispatcher
+from .dispatcher import create_dispatcher

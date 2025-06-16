@@ -4,18 +4,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from ..constants import ATTEMPT, CRITERION
+from ..constants import ATTEMPT, Role, Criterion
 
 
 class User(BaseModel):
     telegram_id: int
     username: Optional[str]
     phone_number: str
-    role: Literal[
-        "ADMIN",
-        "REFEREE",
-        "PILOT"
-    ]
+    role: Role
 
 
 class Referral(BaseModel):
@@ -41,7 +37,7 @@ class Event(BaseModel):
 
 class Referee(BaseModel):
     full_name: str        # ФИО судьи
-    criterion: CRITERION  # Оцениваемый критерий
+    criterion: Criterion  # Оцениваемый критерий
 
 
 class Pilot(BaseModel):
@@ -59,7 +55,7 @@ class Qualification(BaseModel):
 
 class RefereeScore(BaseModel):
     full_name: str
-    criterion: CRITERION
+    criterion: Criterion
     points: float
 
 
