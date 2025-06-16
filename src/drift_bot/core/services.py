@@ -9,7 +9,7 @@ from .dto import CreatedEvent, EventWithPhoto, PilotWithPhoto
 from .base import EventRepository, FileStorage
 from .exceptions import RanOutNumbersError
 
-from ..constants import EVENT_BUCKET, SUPPORTED_IMAGE_FORMATS
+from ..constants import EVENTS_BUCKET, PILOTS_BUCKET, SUPPORTED_IMAGE_FORMATS
 
 
 class NumberGenerator:
@@ -45,7 +45,7 @@ class EventService:
             await self._file_storage.upload_file(
                 file_data=photo_data,
                 file_name=photo_name,
-                bucket_name=EVENT_BUCKET
+                bucket_name=EVENTS_BUCKET
             )
             event.photo_name = photo_name
         created_event = await self._event_repository.create(event)
@@ -56,7 +56,7 @@ class EventService:
         if event.image_file is not None:
             await self._file_storage.remove_file(
                 file_name=event.image_file,
-                bucket_name=EVENT_BUCKET
+                bucket_name=EVENTS_BUCKET
             )
         is_deleted = await self._event_repository.delete(event_id)
         return is_deleted
@@ -68,7 +68,7 @@ class EventService:
             if event.photo_name:
                 photo_data = await self._file_storage.download_file(
                     file_name=event.photo_name,
-                    bucket_name=EVENT_BUCKET
+                    bucket_name=EVENTS_BUCKET
                 )
             sending_event = EventWithPhoto(**event.model_dump(), photo_data=photo_data)
             yield sending_event
@@ -79,7 +79,7 @@ class EventService:
         if last_event.photo_name:
             photo_data = await self._file_storage.download_file(
                 file_name=last_event.photo_name,
-                bucket_name=EVENT_BUCKET
+                bucket_name=EVENTS_BUCKET
             )
         return EventWithPhoto(**last_event.model_dump(), photo_data=photo_data)
 
@@ -88,6 +88,6 @@ class EventService:
         for pilot in pilots:
             photo_data = await self._file_storage.download_file(
                 file_name=pilot.photo_name,
-                bucket_name=EVENT_BUCKET
+                bucket_name=PILOTS_BUCKET
             )
             yield PilotWithPhoto(**pilot.model_dump(), photo_data=photo_data)
