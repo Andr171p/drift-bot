@@ -26,6 +26,6 @@ def admin_required(func: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         telegram_id = message.from_user.id
         user = await user_repository.read(telegram_id)
         if user.role != Role.ADMIN:
-            return await message.answer("У вас нет прав администратора")
+            return await message.answer("⛔ Доступ ограничен! У вас нет прав администратора.")
         return func(message, *args, **kwargs)
     return wrapper
