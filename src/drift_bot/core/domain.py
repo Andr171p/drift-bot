@@ -36,8 +36,9 @@ class Event(BaseModel):
 
 
 class Referee(BaseModel):
-    full_name: str        # ФИО судьи
-    criterion: Criterion  # Оцениваемый критерий
+    full_name: str             # ФИО судьи
+    photo_name: Optional[str]  # Имя файла с фото в S3
+    criterion: Criterion       # Оцениваемый критерий
 
 
 class Pilot(BaseModel):

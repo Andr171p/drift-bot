@@ -5,7 +5,7 @@ import random
 from uuid import uuid4
 
 from .domain import Event
-from .dto import CreatedEvent, SendingEvent, SendingPilot
+from .dto import CreatedEvent, EventWithPhoto, PilotWithPhoto
 from .base import EventRepository, FileStorage
 from .exceptions import RanOutNumbersError
 
@@ -61,33 +61,33 @@ class EventService:
         is_deleted = await self._event_repository.delete(event_id)
         return is_deleted
 
-    async def get_events(self, page: int, limit: int) -> AsyncIterator[SendingEvent]:
+    async def get_events(self, page: int, limit: int) -> AsyncIterator[EventWithPhoto]:
         events = await self._event_repository.paginate(page, limit)
         for event in events:
-            photo: Optional[bytes] = None
+            photo_data: Optional[bytes] = None
             if event.photo_name:
-                photo = await self._file_storage.download_file(
+                photo_data = await self._file_storage.download_file(
                     file_name=event.photo_name,
                     bucket_name=EVENT_BUCKET
                 )
-            sending_event = SendingEvent(**event.model_dump(), photo=photo)
+            sending_event = EventWithPhoto(**event.model_dump(), photo_data=photo_data)
             yield sending_event
 
-    async def get_last_event(self) -> Optional[SendingEvent]:
+    async def get_last_event(self) -> Optional[EventWithPhoto]:
         last_event = await self._event_repository.get_last()
-        photo: Optional[bytes] = None
+        photo_data: Optional[bytes] = None
         if last_event.photo_name:
-            photo = await self._file_storage.download_file(
+            photo_data = await self._file_storage.download_file(
                 file_name=last_event.photo_name,
                 bucket_name=EVENT_BUCKET
             )
-        return SendingEvent(**last_event.model_dump(), photo=photo)
+        return EventWithPhoto(**last_event.model_dump(), photo_data=photo_data)
 
-    async def get_pilots(self, event_id: int) -> AsyncIterator[SendingPilot]:
+    async def get_pilots(self, event_id: int) -> AsyncIterator[PilotWithPhoto]:
         pilots = await self._event_repository.get_pilots(event_id)
         for pilot in pilots:
-            photo = await self._file_storage.download_file(
+            photo_data = await self._file_storage.download_file(
                 file_name=pilot.photo_name,
                 bucket_name=EVENT_BUCKET
             )
-            yield SendingPilot(**pilot.model_dump(), photo=photo)
+            yield PilotWithPhoto(**pilot.model_dump(), photo_data=photo_data)

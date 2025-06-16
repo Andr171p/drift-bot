@@ -14,7 +14,6 @@ from ..callbacks import ConfirmCallback, AdminEventCallback
 from ..keyboards import confirm_event_creation_kb, admin_event_actions_kb
 
 from ...core.domain import Event
-from ...core.base import EventRepository
 from ...core.services import EventService
 from ...templates import EVENT_TEMPLATE, PILOT_TEMPLATE
 
@@ -127,7 +126,7 @@ async def send_last_event(message: Message, event_service: Depends[EventService]
         date=event.map_link
     )
     await message.answer_photo(
-        photo=BufferedInputFile(file=event.photo, filename=f"{event.title}.jpg"),
+        photo=BufferedInputFile(file=event.photo_data, filename=f"{event.title}.jpg"),
         caption=text,
         reply_markup=admin_event_actions_kb(event_id=event.id)
     )
@@ -149,6 +148,9 @@ async def send_event_pilots(
             car=pilot.car,
             created_at=pilot.created_at
         )
-        await call.message.answer_photo(photo=pilot.photo, caption=text)
+        await call.message.answer_photo(
+            photo=BufferedInputFile(file=pilot.photo_data, filename=f"{pilot.full_name}.jpg"),
+            caption=text
+        )
     if not has_pilots:
         await call.message.answer("🚫 На это мероприятие не зарегистрировано ни одного пилота.")
