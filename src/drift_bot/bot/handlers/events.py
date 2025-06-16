@@ -70,14 +70,13 @@ async def enter_event_date(message: Message, state: FSMContext) -> None:
     date = datetime.strptime(message.text, "%d.%m.%Y %H:%M")
     await state.update_data(date=date)
     data = await state.get_data()
-    text = EVENT_TEMPLATE.format(**data)
-    '''text = f"""
-    📌 <b>Название:</b> {data["title"]}
-    📝 <b>Описание:</b> {data.get("description", "Нет")}
-    📍 <b>Место:</b> {data["location"]}
-    🗺️ <b>Как добраться:</b> {data["map_link"]}
-    🗓 <b>Дата:</b> {date.strftime('%d.%m.%Y %H:%M')}
-    """'''
+    text = EVENT_TEMPLATE.format(
+        title=data["title"],
+        description=data["description"],
+        location=data["location"],
+        map_link=data["map_link"],
+        date=data["date"].strftime('%d.%m.%Y %H:%M')
+    )
     await message.answer_photo(
         photo=data["photo_id"],
         caption=text,
