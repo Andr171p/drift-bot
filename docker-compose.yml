@@ -1,0 +1,44 @@
+services:
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: miniouser     # Логин для root-пользователя
+      MINIO_ROOT_PASSWORD: miniopassword  # Пароль для root-пользователя
+    volumes:
+      - ./.docker/minio-data:/data       # Локальная папка для хранения данных
+    ports:
+      - "9000:9000"              # S3 API (для SDK и CLI)
+      - "9001:9001"              # Web Console (UI)
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:13-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=drift_bot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5555:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d drift_bot"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  redis:
+    image: redis:6-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+
+volumes:
+  postgres_data:
+  redis_data:

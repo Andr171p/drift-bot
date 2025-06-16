@@ -13,9 +13,31 @@ class UserOrm(Base):
     username: Mapped[str | None] = mapped_column(nullable=True)
     role: Mapped[str]
 
+    referrals: Mapped[list["ReferralOrm"]] = relationship(back_populates="user")
+
     __table_args__ = (
         CheckConstraint("role IN ('ADMIN', 'REFEREE', 'PILOT')", "check_role"),
     )
+
+
+class ReferralOrm(Base):
+    __tablename__ = "referrals"
+
+    event_id: Mapped[int] = mapped_column(
+        ForeignKey("events.id"),
+        unique=False,
+        nullable=False
+    )
+    admin_id: Mapped[int] = mapped_column(
+        ForeignKey("users.telegram_id"),
+        unique=False,
+        nullable=False
+    )
+    code: Mapped[str] = mapped_column(unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+
+    user: Mapped["UserOrm"] = relationship(argument="UserOrm", back_populates="referrals")
+    event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="referrals")
 
 
 class EventOrm(Base):
@@ -28,19 +50,9 @@ class EventOrm(Base):
     date: Mapped[datetime] = mapped_column(DateTime)
     active: bool
 
-    referees: Mapped[list["RefereeOrm"]] = relationship(back_populates="race")
-    pilots: Mapped[list["PilotOrm"]] = relationship(back_populates="race")
-
-
-class ReferralOrm(Base):
-    __tablename__ = "referrals"
-
-    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=False, nullable=False)
-    admin_id: Mapped[int]
-    code: Mapped[str] = mapped_column(unique=True, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime)
-
-    events: Mapped[list["EventOrm"]] = relationship(argument="EventOrm", back_populates="referrals")
+    referees: Mapped[list["RefereeOrm"]] = relationship(back_populates="event")
+    pilots: Mapped[list["PilotOrm"]] = relationship(back_populates="event")
+    referrals: Mapped[list["ReferralOrm"]] = relationship(back_populates="event")
 
 
 class RefereeOrm(Base):
