@@ -9,13 +9,14 @@ from aiogram.enums.parse_mode import ParseMode
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..states import EventForm
-from ..enums import Confirmation
-from ..callbacks import ConfirmCallback
-from ..keyboards import confirm_event_creation_kb
+from ..enums import Confirmation, AdminEventAction
+from ..callbacks import ConfirmCallback, AdminEventCallback
+from ..keyboards import confirm_event_creation_kb, admin_event_actions_kb
 
 from ...core.domain import Event
+from ...core.base import EventRepository
 from ...core.services import EventService
-from ...templates import EVENT_TEMPLATE
+from ...templates import EVENT_TEMPLATE, PILOT_TEMPLATE
 
 
 events_router = Router(name=__name__)
@@ -127,5 +128,27 @@ async def send_last_event(message: Message, event_service: Depends[EventService]
     )
     await message.answer_photo(
         photo=BufferedInputFile(file=event.photo, filename=f"{event.title}.jpg"),
-        caption=text
+        caption=text,
+        reply_markup=admin_event_actions_kb(event_id=event.id)
     )
+
+
+@events_router.callback_query(AdminEventCallback.filter(F.action == AdminEventAction.PILOTS_LIST))
+async def send_event_pilots(
+        call: CallbackQuery,
+        callback_data: AdminEventCallback,
+        event_service: Depends[EventService]
+) -> None:
+    has_pilots = False
+    async for pilot in event_service.get_pilots(callback_data.event_id):
+        has_pilots = True
+        text = PILOT_TEMPLATE.format(
+            full_name=pilot.full_name,
+            age=pilot.age,
+            description=pilot.description,
+            car=pilot.car,
+            created_at=pilot.created_at
+        )
+        await call.message.answer_photo(photo=pilot.photo, caption=text)
+    if not has_pilots:
+        await call.message.answer("🚫 На это мероприятие не зарегистрировано ни одного пилота.")

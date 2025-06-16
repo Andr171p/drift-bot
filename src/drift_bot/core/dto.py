@@ -14,7 +14,7 @@ class CreatedEvent(Event):
 
 
 class SendingEvent(BaseModel):
-    """Отправка события пользователю"""
+    """Отправка мероприятия пользователю"""
     id: int
     title: str
     description: Optional[str]
@@ -27,3 +27,13 @@ class SendingEvent(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SendingPilot(BaseModel):
+    """Отправка пилота пользователю"""
+    full_name: str
+    age: int
+    description: str
+    photo: bytes
+    car: str
+    created_at: datetime

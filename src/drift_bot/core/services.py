@@ -1,11 +1,11 @@
-from typing import Sequence, Optional, Any
-from collections.abc import AsyncGenerator
+from typing import Sequence, Optional
+from collections.abc import AsyncIterator
 
 import random
 from uuid import uuid4
 
 from .domain import Event
-from .dto import CreatedEvent, SendingEvent
+from .dto import CreatedEvent, SendingEvent, SendingPilot
 from .base import EventRepository, FileStorage
 from .exceptions import RanOutNumbersError
 
@@ -61,7 +61,7 @@ class EventService:
         is_deleted = await self._event_repository.delete(event_id)
         return is_deleted
 
-    async def get_events(self, page: int, limit: int) -> AsyncGenerator[SendingEvent, Any]:
+    async def get_events(self, page: int, limit: int) -> AsyncIterator[SendingEvent]:
         events = await self._event_repository.paginate(page, limit)
         for event in events:
             photo: Optional[bytes] = None
@@ -82,3 +82,12 @@ class EventService:
                 bucket_name=EVENT_BUCKET
             )
         return SendingEvent(**last_event.model_dump(), photo=photo)
+
+    async def get_pilots(self, event_id: int) -> AsyncIterator[SendingPilot]:
+        pilots = await self._event_repository.get_pilots(event_id)
+        for pilot in pilots:
+            photo = await self._file_storage.download_file(
+                file_name=pilot.photo_name,
+                bucket_name=EVENT_BUCKET
+            )
+            yield SendingPilot(**pilot.model_dump(), photo=photo)

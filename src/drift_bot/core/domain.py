@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Optional
 
 from datetime import datetime
 
@@ -41,11 +41,11 @@ class Referee(BaseModel):
 
 
 class Pilot(BaseModel):
-    full_name: str                    # ФИО пилота
-    age: int                          # Возраст пилота
-    description: str                  # Описание пилота (о нём и его машине, полезная информация для комментатора)
-    photo_name: Optional[str] = None  # Фото пилота или его авто
-    car: str                          # Авто пилота
+    full_name: str    # ФИО пилота
+    age: int          # Возраст пилота
+    description: str  # Описание пилота (о нём и его машине, полезная информация для комментатора)
+    photo_name: str   # Фото пилота или его авто
+    car: str          # Авто пилота
 
 
 class Qualification(BaseModel):
