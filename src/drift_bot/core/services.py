@@ -4,9 +4,9 @@ from collections.abc import AsyncIterator
 import random
 from uuid import uuid4
 
-from .domain import Event
+from .domain import Event, Referee, Referral
 from .dto import CreatedEvent, EventWithPhoto, PilotWithPhoto
-from .base import EventRepository, FileStorage
+from .base import EventRepository, FileStorage, CRUDRepository
 from .exceptions import RanOutNumbersError
 
 from ..constants import EVENTS_BUCKET, PILOTS_BUCKET, SUPPORTED_IMAGE_FORMATS
@@ -28,8 +28,14 @@ class NumberGenerator:
 
 
 class EventService:
-    def __init__(self, event_repository: EventRepository, file_storage: FileStorage) -> None:
+    def __init__(
+            self,
+            event_repository: EventRepository,
+            referral_repository: CRUDRepository[Referral],
+            file_storage: FileStorage
+    ) -> None:
         self._event_repository = event_repository
+        self._referral_repository = referral_repository
         self._file_storage = file_storage
 
     async def create_event(
@@ -91,3 +97,22 @@ class EventService:
                 bucket_name=PILOTS_BUCKET
             )
             yield PilotWithPhoto(**pilot.model_dump(), photo_data=photo_data)
+
+    async def create_referral(self, event_id: int) -> ...:
+        ...
+
+
+class RefereeService:
+    def __init__(
+            self,
+            referral_repository: CRUDRepository[Referral],
+            referee_repository: CRUDRepository[Referee]
+    ) -> None:
+        self._referral_repository = referral_repository
+        self._referee_repository = referee_repository
+
+    async def register_for_event(self, referral_link: str, referee: Referee) -> ...:
+        ...
+
+    async def give_points(self) -> ...:
+        ...

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +10,9 @@ from src.drift_bot.core.domain import User
 from src.drift_bot.core.base import CRUDRepository
 from src.drift_bot.core.exceptions import (
     CreationError,
-    ReadingError
+    ReadingError,
+    UpdatingError,
+    DeletingError
 )
 
 
@@ -45,3 +47,32 @@ class SQLUserRepository(CRUDRepository[User]):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading user: {e}")
+
+    async def update(self, telegram_id: int, **kwargs) -> Optional[User]:
+        try:
+            stmt = (
+                update(UserOrm)
+                .values(**kwargs)
+                .where(UserOrm.telegram_id == telegram_id)
+                .returning(UserOrm)
+            )
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            user = result.scalar_one_or_none()
+            return User.model_validate(user) if user else None
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise UpdatingError(f"Error while updating user: {e}") from e
+
+    async def delete(self, telegram_id: int) -> bool:
+        try:
+            stmt = (
+                delete(UserOrm)
+                .where(UserOrm.telegram_id == telegram_id)
+            )
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            return result.rowcount > 0
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DeletingError(f"Error while deleting user: {e}") from e

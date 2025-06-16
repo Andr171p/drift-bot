@@ -93,7 +93,10 @@ class QualificationOrm(Base):
 
     pilot_id: Mapped[int] = mapped_column(ForeignKey("pilots.id"), unique=False, nullable=False)
     attempt: Mapped[int]
-    points: Mapped[float]
+    angle_points: int
+    style_points: int
+    line_points: int
+    total_points: Mapped[float]
 
     pilot: Mapped["PilotOrm"] = relationship(argument="PilotOrm", back_populates="qualifications")
 

@@ -37,3 +37,8 @@ class PilotWithPhoto(BaseModel):
     photo_data: bytes
     car: str
     created_at: datetime
+
+
+class GivingPointsReferee(BaseModel):
+    pilot_id: int
+    points: int
