@@ -1,25 +1,27 @@
 from datetime import datetime
 
 from aiogram import F, Router
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
+from aiogram.enums.parse_mode import ParseMode
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..states import EventForm
+from ..enums import Confirmation
 from ..callbacks import ConfirmCallback
-from ..constants import ParseMode, Confirmation
 from ..keyboards import confirm_event_creation_kb
 
 from ...core.domain import Event
 from ...core.services import EventService
+from ...templates import EVENT_TEMPLATE
 
 
 events_router = Router(name=__name__)
 
 
-@events_router.message(Command("create-event"))
+@events_router.message(Command("create_event"))
 async def send_event_form(message: Message, state: FSMContext) -> None:
     await state.set_state(EventForm.title)
     await message.answer("Введите название мероприятия: ")
@@ -68,13 +70,14 @@ async def enter_event_date(message: Message, state: FSMContext) -> None:
     date = datetime.strptime(message.text, "%d.%m.%Y %H:%M")
     await state.update_data(date=date)
     data = await state.get_data()
-    text = f"""
+    text = EVENT_TEMPLATE.format(**data)
+    '''text = f"""
     📌 <b>Название:</b> {data["title"]}
     📝 <b>Описание:</b> {data.get("description", "Нет")}
     📍 <b>Место:</b> {data["location"]}
     🗺️ <b>Как добраться:</b> {data["map_link"]}
     🗓 <b>Дата:</b> {date.strftime('%d.%m.%Y %H:%M')}
-    """
+    """'''
     await message.answer_photo(
         photo=data["photo_id"],
         caption=text,
@@ -89,7 +92,7 @@ async def enter_event_date(message: Message, state: FSMContext) -> None:
 @events_router.callback_query(ConfirmCallback.filter(F.confirmation == Confirmation.NO))
 async def cancel_event_creation(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    await call.answer("❌ Создание отменено.")
+    await call.message.answer("❌ Создание отменено.")
 
 
 @events_router.callback_query(ConfirmCallback.filter(F.confirmation == Confirmation.YES))
@@ -110,4 +113,20 @@ async def create_event(
     photo_data = await call.bot.download(file=photo_file)
     photo_format = photo_file.file_path.split(".")[-1].lower()
     await event_service.create_event(event, photo_data=photo_data.read(), photo_format=photo_format)
-    await call.answer("✅ Мероприятие создано!")
+    await call.message.answer("✅ Мероприятие создано!")
+
+
+@events_router.message(Command("last_event"))
+async def send_last_event(message: Message, event_service: Depends[EventService]) -> None:
+    event = await event_service.get_last_event()
+    text = EVENT_TEMPLATE.format(
+        title=event.title,
+        description=event.description,
+        location=event.location,
+        map_link=event.map_link,
+        date=event.map_link
+    )
+    await message.answer_photo(
+        photo=BufferedInputFile(file=event.photo, filename=f"{event.title}.jpg"),
+        caption=text
+    )

@@ -1,10 +1,8 @@
 
 
-EVENT_TEMPLATE = """
-<b>{title}</b>
-{description}
-{location}
-{map_link}
-{date}
-{active}
+EVENT_TEMPLATE = """📌 <b>Название:</b> {title}
+📝 <b>Описание:</b> {description}
+📍 <b>Место:</b> {location}
+🗺️ <b>Как добраться:</b> {map_link}
+🗓 <b>Дата:</b> {date}
 """

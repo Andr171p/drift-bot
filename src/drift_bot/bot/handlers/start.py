@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
+from aiogram.enums.parse_mode import ParseMode
 
 start_router = Router(name=__name__)
 
@@ -13,7 +14,7 @@ async def start(message: Message) -> None:
         
         Команды:
          * /start
-         * /create-event
+         * /create_event
        """,
-        parse_mode="Markdown"
+        parse_mode=ParseMode.MARKDOWN
     )

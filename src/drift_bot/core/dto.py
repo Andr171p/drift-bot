@@ -8,11 +8,14 @@ from .domain import Event
 
 
 class CreatedEvent(Event):
+    id: int
     created_at: datetime
     updated_at: datetime
 
 
-class ReceivedEvent(BaseModel):
+class SendingEvent(BaseModel):
+    """Отправка события пользователю"""
+    id: int
     title: str
     description: Optional[str]
     photo: Optional[bytes]

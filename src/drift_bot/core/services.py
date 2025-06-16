@@ -5,7 +5,7 @@ import random
 from uuid import uuid4
 
 from .domain import Event
-from .dto import CreatedEvent, ReceivedEvent
+from .dto import CreatedEvent, SendingEvent
 from .base import EventRepository, FileStorage
 from .exceptions import RanOutNumbersError
 
@@ -61,24 +61,24 @@ class EventService:
         is_deleted = await self._event_repository.delete(event_id)
         return is_deleted
 
-    async def get_events(self, page: int, limit: int) -> AsyncGenerator[ReceivedEvent, Any]:
+    async def get_events(self, page: int, limit: int) -> AsyncGenerator[SendingEvent, Any]:
         events = await self._event_repository.paginate(page, limit)
         for event in events:
             photo: Optional[bytes] = None
-            if event.photo_file:
+            if event.photo_name:
                 photo = await self._file_storage.download_file(
-                    file_name=event.image_file,
+                    file_name=event.photo_name,
                     bucket_name=EVENT_BUCKET
                 )
-            received_event = ReceivedEvent(**event.model_dump(), photo=photo)
-            yield received_event
+            sending_event = SendingEvent(**event.model_dump(), photo=photo)
+            yield sending_event
 
-    async def get_last_event(self) -> Optional[ReceivedEvent]:
+    async def get_last_event(self) -> Optional[SendingEvent]:
         last_event = await self._event_repository.get_last()
         photo: Optional[bytes] = None
         if last_event.photo_name:
             photo = await self._file_storage.download_file(
-                file_name=last_event.image_file,
+                file_name=last_event.photo_name,
                 bucket_name=EVENT_BUCKET
             )
-        return ReceivedEvent(**last_event.model_dump(), photo=photo)
+        return SendingEvent(**last_event.model_dump(), photo=photo)
