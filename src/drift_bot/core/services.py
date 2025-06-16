@@ -28,30 +28,26 @@ class NumberGenerator:
 
 
 class EventService:
-    def __init__(
-            self,
-            event_repository: EventRepository,
-            file_storage: FileStorage
-    ) -> None:
+    def __init__(self, event_repository: EventRepository, file_storage: FileStorage) -> None:
         self._event_repository = event_repository
         self._file_storage = file_storage
 
     async def create_event(
             self,
             event: Event,
-            image: Optional[bytes] = None,
-            image_format: Optional[str] = None
+            photo_data: Optional[bytes] = None,
+            photo_format: Optional[str] = None
     ) -> Optional[CreatedEvent]:
-        if image_format not in SUPPORTED_IMAGE_FORMATS:
+        if photo_format not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError("Unsupported image format")
-        if image:
-            image_file = f"{uuid4()}.{image_format}"
+        if photo_data:
+            photo_name = f"{uuid4()}.{photo_format}"
             await self._file_storage.upload_file(
-                file_data=image,
-                file_name=image_file,
+                file_data=photo_data,
+                file_name=photo_name,
                 bucket_name=EVENT_BUCKET
             )
-            event.image_file = image_file
+            event.photo_name = photo_name
         created_event = await self._event_repository.create(event)
         return created_event
 
@@ -68,22 +64,22 @@ class EventService:
     async def get_events(self, page: int, limit: int) -> AsyncGenerator[ReceivedEvent, Any]:
         events = await self._event_repository.paginate(page, limit)
         for event in events:
-            image: Optional[bytes] = None
-            if event.image_file:
-                image = await self._file_storage.download_file(
+            photo: Optional[bytes] = None
+            if event.photo_file:
+                photo = await self._file_storage.download_file(
                     file_name=event.image_file,
                     bucket_name=EVENT_BUCKET
                 )
-            received_event = ReceivedEvent(**event.model_dump(), image=image)
+            received_event = ReceivedEvent(**event.model_dump(), photo=photo)
             yield received_event
 
     async def get_last_event(self) -> Optional[ReceivedEvent]:
         events = await self._event_repository.read_all()
         last_event = events[-1]
-        image: Optional[bytes] = None
+        photo: Optional[bytes] = None
         if last_event.image_file:
-            image = await self._file_storage.download_file(
+            photo = await self._file_storage.download_file(
                 file_name=last_event.image_file,
                 bucket_name=EVENT_BUCKET
             )
-        return ReceivedEvent(**last_event.model_dump(), image=image)
+        return ReceivedEvent(**last_event.model_dump(), photo=photo)
