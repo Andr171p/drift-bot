@@ -17,7 +17,7 @@ def confirm_event_creation_kb() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def admin_event_actions_kb(event_id: int) -> InlineKeyboardMarkup:
+def admin_event_actions_kb(event_id: int, active: bool) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
         text="Редактировать ✏️",
@@ -28,7 +28,7 @@ def admin_event_actions_kb(event_id: int) -> InlineKeyboardMarkup:
         callback_data=AdminEventCallback(event_id=event_id, action=AdminEventAction.DELETE).pack()
     )
     builder.button(
-        text="Открыть регистрацию 🚀",
+        text="Открыть регистрацию 🚀" if active else "Закрыть регистрацию 🔒",
         callback_data=AdminEventCallback(
             event_id=event_id,
             action=AdminEventAction.TOGGLE_REGISTRATION

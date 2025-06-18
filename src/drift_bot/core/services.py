@@ -1,15 +1,31 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Generic, TypeVar
 from collections.abc import AsyncIterator
 
 import random
+import secrets
 from uuid import uuid4
+from datetime import datetime, timedelta
 
 from .domain import Event, Referee, Referral
-from .dto import CreatedEvent, EventWithPhoto, PilotWithPhoto
+from .dto import CreatedEvent, EventWithPhoto, PilotWithPhoto, Photo
 from .base import EventRepository, FileStorage, CRUDRepository
-from .exceptions import RanOutNumbersError
+from .exceptions import (
+    RanOutNumbersError,
+    UploadingFileError,
+    CreationError,
+    WithPhotoCreationError
+)
 
-from ..constants import EVENTS_BUCKET, PILOTS_BUCKET, SUPPORTED_IMAGE_FORMATS
+from ..constants import (
+    EVENTS_BUCKET,
+    PILOTS_BUCKET,
+    SUPPORTED_IMAGE_FORMATS,
+    CODE_LENGTH,
+    DAYS_EXPIRE
+)
+
+
+T = TypeVar("T")
 
 
 class NumberGenerator:
@@ -25,6 +41,31 @@ class NumberGenerator:
             number = random.randint(self._start, self._end)
             if number not in used_numbers:
                 return number
+
+
+class PhotoService:
+    def __init__(self, file_storage: FileStorage) -> None:
+        self._file_storage = file_storage
+
+    async def create_with_photo(
+            self,
+            model: T,
+            photo: Optional[Photo],
+            crud_repository: CRUDRepository[T]
+    ) -> T:
+        try:
+            if photo:
+                photo_name = photo.file_name
+                await self._file_storage.upload_file(
+                    file_data=photo.data,
+                    file_name=photo_name,
+                    bucket_name=EVENTS_BUCKET
+                )
+                model.photo_name = photo_name
+            created_model = await crud_repository.create(model)
+            return created_model
+        except (UploadingFileError, CreationError) as e:
+            raise WithPhotoCreationError(f"Error while with photo creation: {e}") from e
 
 
 class EventService:
@@ -79,6 +120,16 @@ class EventService:
             sending_event = EventWithPhoto(**event.model_dump(), photo_data=photo_data)
             yield sending_event
 
+    async def get_event(self, event_id: int) -> Optional[EventWithPhoto]:
+        event = await self._event_repository.read(event_id)
+        photo_data: Optional[bytes] = None
+        if event.photo_name:
+            photo_data = await self._file_storage.download_file(
+                file_name=event.photo_name,
+                bucket_name=EVENTS_BUCKET
+            )
+        return EventWithPhoto(**event.model_dump(), photo_data=photo_data)
+
     async def get_last_event(self) -> Optional[EventWithPhoto]:
         last_event = await self._event_repository.get_last()
         photo_data: Optional[bytes] = None
@@ -98,8 +149,41 @@ class EventService:
             )
             yield PilotWithPhoto(**pilot.model_dump(), photo_data=photo_data)
 
+    async def toggle_registration(self, event_id: int) -> CreatedEvent:
+        event = await self._event_repository.read(event_id)
+        active = True
+        if event.active:
+            active = False
+        updated_event = await self._event_repository.update(event_id, active=active)
+        return updated_event
+
     async def create_referral(self, event_id: int) -> ...:
         ...
+
+
+class ReferralService:
+    def __init__(self, referral_repository: CRUDRepository[Referral]) -> None:
+        self._referral_repository = referral_repository
+
+    @staticmethod
+    def generate_code() -> str:
+        return secrets.token_urlsafe(CODE_LENGTH)
+
+    @staticmethod
+    def calculate_expire_time(days: int) -> datetime:
+        return datetime.now() + timedelta(days=days)
+
+    async def create_referral_link(self, event_id: int, admin_id: int) -> str:
+        code = self.generate_code()
+        expire_at = self.calculate_expire_time(DAYS_EXPIRE)
+        referral = Referral(
+            event_id=event_id,
+            admin_id=admin_id,
+            code=code,
+            expires_at=expire_at
+        )
+        _ = await self._referral_repository.create(referral)
+        return code
 
 
 class RefereeService:

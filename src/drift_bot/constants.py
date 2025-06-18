@@ -45,3 +45,7 @@ SUPPORTED_IMAGE_FORMATS = {"png", "jpg", "jpeg"}
 # Пагинация
 FIRST_PAGE = 1
 LIMIT = 3
+
+# Реферальная система:
+CODE_LENGTH = 16
+DAYS_EXPIRE = 3

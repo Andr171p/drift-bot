@@ -128,7 +128,7 @@ async def send_last_event(message: Message, event_service: Depends[EventService]
     await message.answer_photo(
         photo=BufferedInputFile(file=event.photo_data, filename=f"{event.title}.jpg"),
         caption=text,
-        reply_markup=admin_event_actions_kb(event_id=event.id)
+        reply_markup=admin_event_actions_kb(event_id=event.id, active=event.active)
     )
 
 
@@ -154,3 +154,28 @@ async def send_event_pilots(
         )
     if not has_pilots:
         await call.message.answer("🚫 На это мероприятие не зарегистрировано ни одного пилота.")
+
+
+@events_router.callback_query(
+    AdminEventCallback.filter(F.action == AdminEventAction.TOGGLE_REGISTRATION)
+)
+async def toggle_registration(
+        call: CallbackQuery,
+        callback_data: AdminEventCallback,
+        event_service: Depends[EventService]
+) -> None:
+    await event_service.toggle_registration(callback_data.event_id)
+    event = await event_service.get_event(callback_data.event_id)
+    text = EVENT_TEMPLATE.format(
+        title=event.title,
+        description=event.description,
+        location=event.location,
+        map_link=event.map_link,
+        date=event.map_link
+    )
+    await call.message.answer_photo(
+        photo=BufferedInputFile(file=event.photo_data, filename=f"{event.title}.jpg"),
+        caption=text,
+        reply_markup=admin_event_actions_kb(event_id=event.id, active=event.active)
+    )
+

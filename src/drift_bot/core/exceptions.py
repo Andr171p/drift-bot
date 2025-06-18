@@ -41,5 +41,5 @@ class ServiceError(Exception):
     pass
 
 
-class EventCreationError(ServiceError):
+class WithPhotoCreationError(ServiceError):
     pass
