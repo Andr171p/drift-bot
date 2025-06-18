@@ -1,6 +1,7 @@
 import secrets
 
 from src.drift_bot.constants import BOT_URL
+from src.drift_bot.utils import parse_referral_link
 
 
 def generate_referral_link() -> str:
@@ -9,4 +10,8 @@ def generate_referral_link() -> str:
     return referral_link
 
 
-print(generate_referral_link())
+link = generate_referral_link()
+
+role, code = parse_referral_link(link)
+
+print(role.upper())

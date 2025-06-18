@@ -2,12 +2,18 @@ from typing import Any, Callable, Coroutine, TypeVar
 from typing_extensions import ParamSpec
 from functools import wraps
 
+import logging
+
 from aiogram.types import Message
 
 from .core.domain import User
 from .core.base import CRUDRepository
+from .core.exceptions import CreationError
 from .constants import Role
 from .ioc import container
+
+
+logger = logging.getLogger(__name__)
 
 
 P = ParamSpec("P")  # Параметры оригинальной функции
@@ -15,17 +21,41 @@ R = TypeVar("R")    # Возвращаемый тип оригинальной �
 MessageHandler = Callable[P, Coroutine[Any, Any, R]]
 
 
-def admin_required(func: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
-    """
-        Декоратор для проверки прав администратора.
-        Если пользователь не админ, возвращает сообщение об ошибке.
-    """
-    @wraps(func)
-    async def wrapper(message: Message, *args, **kwargs) -> R | None:
-        user_repository = await container.get(CRUDRepository[User])
-        telegram_id = message.from_user.id
-        user = await user_repository.read(telegram_id)
-        if user.role != Role.ADMIN:
-            return await message.answer("⛔ Доступ ограничен! У вас нет прав администратора.")
-        return func(message, *args, **kwargs)
-    return wrapper
+def role_required(
+        role: Role,
+        error_message: str
+) -> Callable[[MessageHandler[P, R]], MessageHandler[P, R] | None]:
+    """Декоратор для проверки прав доступа."""
+    def decorator(func: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
+        @wraps(func)
+        async def wrapper(message: Message, *args, **kwargs) -> R | None:
+            user_repository = await container.get(CRUDRepository[User])
+            telegram_id = message.from_user.id
+            user = await user_repository.read(telegram_id)
+            if user.role != role:
+                logger.warning(f"Required role: {role}")
+                await message.answer(error_message)
+            return func(message, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def save_user(role: Role) -> Callable[[MessageHandler[P, R]], MessageHandler[P, R] | None]:
+    """Декоратор для сохранения пользователя после регистрации"""
+    def decorator(func: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
+        @wraps(func)
+        async def wrapper(message: Message, *args, **kwargs) -> R | None:
+            user_repository = await container.get(CRUDRepository[User])
+            user = User(
+                telegram_id=message.from_user.id,
+                username=message.from_user.username,
+                role=role
+            )
+            try:
+                _ = await user_repository.create(user)
+            except CreationError as e:
+                logger.error(f"Error while user saving: {e}")
+                await message.answer("⚠️ Произошла ошибка, попробуйте позже. Приносим свои извинения.")
+            return func(message, *args, **kwargs)
+        return wrapper
+    return decorator

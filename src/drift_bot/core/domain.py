@@ -10,7 +10,6 @@ from ..constants import ATTEMPT, Role, Criterion
 class User(BaseModel):
     telegram_id: int
     username: Optional[str]
-    phone_number: str
     role: Role
 
 
@@ -36,12 +35,14 @@ class Event(BaseModel):
 
 
 class Referee(BaseModel):
+    event_id: int              # ID этапа на котором работает судья
     full_name: str             # ФИО судьи
     photo_name: Optional[str]  # Имя файла с фото в S3
     criterion: Criterion       # Оцениваемый критерий
 
 
 class Pilot(BaseModel):
+    event_id: int     # ID этапа в котором принимает участие пилот
     full_name: str    # ФИО пилота
     age: int          # Возраст пилота
     description: str  # Описание пилота (о нём и его машине, полезная информация для комментатора)
