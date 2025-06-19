@@ -1,10 +1,24 @@
-from typing import Optional
+from typing import Optional, Literal
 
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
 from ..constants import ATTEMPT, Role, Criterion
+
+
+class File(BaseModel):
+    data: bytes
+    format: str
+    file_name: Optional[str] = None
+
+    @property
+    def size(self) -> int:
+        return len(self.data) / (1024 * 1024)
+
+
+class Photo(File):
+    format: Literal["png", "jpg", "jpeg"]
 
 
 class User(BaseModel):
@@ -25,7 +39,7 @@ class Referral(BaseModel):
 class Event(BaseModel):
     title: str                         # Название мероприятия
     description: Optional[str] = None  # Описание мероприятия
-    photo_name: Optional[str] = None   # Название файла с фото из файлового хранилища
+    file_name: Optional[str] = None    # Название файла в S3
     location: str                      # Место проведения
     map_link: Optional[str] = None     # Ссылка на карты/навигатор
     date: datetime                     # Дата проведения
@@ -37,17 +51,18 @@ class Event(BaseModel):
 class Referee(BaseModel):
     event_id: int              # ID этапа на котором работает судья
     full_name: str             # ФИО судьи
-    photo_name: Optional[str]  # Имя файла с фото в S3
+    file_name: Optional[str]   # Имя файла с фото в S3
     criterion: Criterion       # Оцениваемый критерий
 
 
 class Pilot(BaseModel):
-    event_id: int     # ID этапа в котором принимает участие пилот
-    full_name: str    # ФИО пилота
-    age: int          # Возраст пилота
-    description: str  # Описание пилота (о нём и его машине, полезная информация для комментатора)
-    photo_name: str   # Фото пилота или его авто
-    car: str          # Авто пилота
+    event_id: int           # ID этапа в котором принимает участие пилот
+    full_name: str          # ФИО пилота
+    age: int                # Возраст пилота
+    description: str        # Описание пилота (о нём и его машине, полезная информация для комментатора)
+    photo: Optional[Photo]  # Фото пилота или его авто
+    car: str                # Авто пилота
+    number: int             # Номер пилота получаемый при регистрации
 
 
 class Qualification(BaseModel):

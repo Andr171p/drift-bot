@@ -1,31 +1,17 @@
-from typing import Sequence, Optional, Generic, TypeVar
+from typing import Sequence, Optional, Generic, TypeVar, Union
 from collections.abc import AsyncIterator
 
 import random
-import secrets
-from uuid import uuid4
-from datetime import datetime, timedelta
 
-from .domain import Event, Referee, Referral
-from .dto import CreatedEvent, EventWithPhoto, PilotWithPhoto, Photo
-from .base import EventRepository, FileStorage, CRUDRepository
-from .exceptions import (
-    RanOutNumbersError,
-    UploadingFileError,
-    CreationError,
-    WithPhotoCreationError
-)
-
-from ..constants import (
-    EVENTS_BUCKET,
-    PILOTS_BUCKET,
-    SUPPORTED_IMAGE_FORMATS,
-    CODE_LENGTH,
-    DAYS_EXPIRE
-)
+from .domain import Event, Pilot, Photo
+from .dto import CreatedEvent, CreatedPilot, EventWithPhoto, PilotWithPhoto
+from .base import FileStorage, CRUDRepository
+from .exceptions import RanOutNumbersError
 
 
-T = TypeVar("T")
+T = TypeVar("T", bound=Union[Event, Pilot])
+R = TypeVar("R", bound=Union[EventWithPhoto, PilotWithPhoto])
+CreatedModel = Union[CreatedEvent, CreatedPilot]
 
 
 class NumberGenerator:
@@ -43,160 +29,50 @@ class NumberGenerator:
                 return number
 
 
-class PhotoService:
-    def __init__(self, file_storage: FileStorage) -> None:
-        self._file_storage = file_storage
-
-    async def create_with_photo(
-            self,
-            model: T,
-            photo: Optional[Photo],
-            crud_repository: CRUDRepository[T]
-    ) -> T:
-        try:
-            if photo:
-                photo_name = photo.file_name
-                await self._file_storage.upload_file(
-                    file_data=photo.data,
-                    file_name=photo_name,
-                    bucket_name=EVENTS_BUCKET
-                )
-                model.photo_name = photo_name
-            created_model = await crud_repository.create(model)
-            return created_model
-        except (UploadingFileError, CreationError) as e:
-            raise WithPhotoCreationError(f"Error while with photo creation: {e}") from e
-
-
-class EventService:
+class CRUDService(Generic[T, R]):
     def __init__(
             self,
-            event_repository: EventRepository,
-            referral_repository: CRUDRepository[Referral],
-            file_storage: FileStorage
+            crud_repository: CRUDRepository[T],
+            file_storage: FileStorage,
+            bucket: str
     ) -> None:
-        self._event_repository = event_repository
-        self._referral_repository = referral_repository
+        self._crud_repository = crud_repository
         self._file_storage = file_storage
+        self._bucket = bucket
 
-    async def create_event(
-            self,
-            event: Event,
-            photo_data: Optional[bytes] = None,
-            photo_format: Optional[str] = None
-    ) -> Optional[CreatedEvent]:
-        if photo_format not in SUPPORTED_IMAGE_FORMATS:
-            raise ValueError("Unsupported image format")
-        if photo_data:
-            photo_name = f"{uuid4()}.{photo_format}"
+    async def create(self, model: T, photo: Optional[Photo]) -> None:
+        if photo:
             await self._file_storage.upload_file(
-                file_data=photo_data,
-                file_name=photo_name,
-                bucket_name=EVENTS_BUCKET
+                data=photo.data,
+                file_name=photo.file_name,
+                bucket=self._bucket
             )
-            event.photo_name = photo_name
-        created_event = await self._event_repository.create(event)
-        return created_event
+            model.file_name = photo.file_name
+        await self._crud_repository.create(model)
 
-    async def delete_event(self, event_id: int) -> bool:
-        event = await self._event_repository.read(event_id)
-        if event.image_file is not None:
-            await self._file_storage.remove_file(
-                file_name=event.image_file,
-                bucket_name=EVENTS_BUCKET
-            )
-        is_deleted = await self._event_repository.delete(event_id)
+    async def read(self, id: int) -> Optional[R]:
+        model: CreatedModel = await self._crud_repository.read(id)
+        file_name = model.file_name
+        photo: Optional[Photo] = None
+        if file_name:
+            data = await self._file_storage.download_file(file_name=file_name, bucket=self._bucket)
+            photo = Photo(data=data, file_name=file_name, format=file_name.split(".")[-1].lower())
+        return model.attach_photo(photo)
+
+    async def delete(self, id: int) -> bool:
+        model: CreatedModel = await self._crud_repository.delete(id)
+        is_deleted = False
+        if model:
+            await self._file_storage.remove_file(file_name=model.file_name, bucket=self._bucket)
+            is_deleted = True
         return is_deleted
 
-    async def get_events(self, page: int, limit: int) -> AsyncIterator[EventWithPhoto]:
-        events = await self._event_repository.paginate(page, limit)
-        for event in events:
-            photo_data: Optional[bytes] = None
-            if event.photo_name:
-                photo_data = await self._file_storage.download_file(
-                    file_name=event.photo_name,
-                    bucket_name=EVENTS_BUCKET
-                )
-            sending_event = EventWithPhoto(**event.model_dump(), photo_data=photo_data)
-            yield sending_event
-
-    async def get_event(self, event_id: int) -> Optional[EventWithPhoto]:
-        event = await self._event_repository.read(event_id)
-        photo_data: Optional[bytes] = None
-        if event.photo_name:
-            photo_data = await self._file_storage.download_file(
-                file_name=event.photo_name,
-                bucket_name=EVENTS_BUCKET
-            )
-        return EventWithPhoto(**event.model_dump(), photo_data=photo_data)
-
-    async def get_last_event(self) -> Optional[EventWithPhoto]:
-        last_event = await self._event_repository.get_last()
-        photo_data: Optional[bytes] = None
-        if last_event.photo_name:
-            photo_data = await self._file_storage.download_file(
-                file_name=last_event.photo_name,
-                bucket_name=EVENTS_BUCKET
-            )
-        return EventWithPhoto(**last_event.model_dump(), photo_data=photo_data)
-
-    async def get_pilots(self, event_id: int) -> AsyncIterator[PilotWithPhoto]:
-        pilots = await self._event_repository.get_pilots(event_id)
-        for pilot in pilots:
-            photo_data = await self._file_storage.download_file(
-                file_name=pilot.photo_name,
-                bucket_name=PILOTS_BUCKET
-            )
-            yield PilotWithPhoto(**pilot.model_dump(), photo_data=photo_data)
-
-    async def toggle_registration(self, event_id: int) -> CreatedEvent:
-        event = await self._event_repository.read(event_id)
-        active = True
-        if event.active:
-            active = False
-        updated_event = await self._event_repository.update(event_id, active=active)
-        return updated_event
-
-    async def create_referral(self, event_id: int) -> ...:
-        ...
-
-
-class ReferralService:
-    def __init__(self, referral_repository: CRUDRepository[Referral]) -> None:
-        self._referral_repository = referral_repository
-
-    @staticmethod
-    def generate_code() -> str:
-        return secrets.token_urlsafe(CODE_LENGTH)
-
-    @staticmethod
-    def calculate_expire_time(days: int) -> datetime:
-        return datetime.now() + timedelta(days=days)
-
-    async def create_referral_link(self, event_id: int, admin_id: int) -> str:
-        code = self.generate_code()
-        expire_at = self.calculate_expire_time(DAYS_EXPIRE)
-        referral = Referral(
-            event_id=event_id,
-            admin_id=admin_id,
-            code=code,
-            expires_at=expire_at
-        )
-        _ = await self._referral_repository.create(referral)
-        return code
-
-
-class RefereeService:
-    def __init__(
-            self,
-            referral_repository: CRUDRepository[Referral],
-            referee_repository: CRUDRepository[Referee]
-    ) -> None:
-        self._referral_repository = referral_repository
-        self._referee_repository = referee_repository
-
-    async def register_for_event(self, referral_link: str, referee: Referee) -> ...:
-        ...
-
-    async def give_points(self) -> ...:
-        ...
+    async def read_all(self) -> AsyncIterator[R]:
+        models: list[CreatedModel] = await self._crud_repository.read_all()
+        for model in models:
+            file_name = model.file_name
+            photo: Optional[Photo] = None
+            if file_name:
+                data = await self._file_storage.download_file(file_name=file_name, bucket=self._bucket)
+                photo = Photo(data=data, file_name=file_name, format=file_name.split(".")[-1].lower())
+            yield model.attach_photo(photo)

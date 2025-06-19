@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +11,8 @@ from src.drift_bot.core.dto import CreatedEvent
 from src.drift_bot.core.base import EventRepository
 from src.drift_bot.core.exceptions import (
     CreationError,
-    ReadingError
+    ReadingError,
+    DeletingError
 )
 
 
@@ -33,6 +34,21 @@ class SQLEventRepository(EventRepository):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise CreationError(f"Error while creating event: {e}") from e
+
+    async def delete(self, event_id: int) -> Optional[CreatedEvent]:
+        try:
+            stmt = (
+                delete(EventOrm)
+                .where(EventOrm.id == event_id)
+                .returning(EventOrm)
+            )
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            event = result.scalar_one_or_none()
+            return CreatedEvent.model_validate(event) if event else None
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DeletingError(f"Error while deleting event: {e}") from e
 
     async def get_last(self) -> Optional[CreatedEvent]:
         try:

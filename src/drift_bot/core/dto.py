@@ -1,17 +1,10 @@
-from typing import Optional, Literal
+from typing import Optional
 
-from uuid import uuid4
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from .domain import Event
-
-
-class CreatedEvent(Event):
-    id: int
-    created_at: datetime
-    updated_at: datetime
+from .domain import Event, Pilot, Photo
 
 
 class EventWithPhoto(BaseModel):
@@ -19,7 +12,7 @@ class EventWithPhoto(BaseModel):
     id: int
     title: str
     description: Optional[str]
-    photo_data: Optional[bytes]
+    photo: Optional[Photo]
     location: str
     map_link: Optional[str]
     date: datetime
@@ -30,29 +23,37 @@ class EventWithPhoto(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CreatedEvent(Event):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    def attach_photo(self, photo: Photo) -> EventWithPhoto:
+        return EventWithPhoto(**self.model_dump(), photo=photo)
+
+
 class PilotWithPhoto(BaseModel):
     """Отправка пилота пользователю"""
+    id: int
+    event_id: int
     full_name: str
     age: int
     description: str
-    photo_data: bytes
+    photo: Photo
     car: str
+    number: int
     created_at: datetime
+
+
+class CreatedPilot(Pilot):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    def attach_photo(self, photo: Photo) -> PilotWithPhoto:
+        return PilotWithPhoto(**self.model_dump(), photo=photo)
 
 
 class GivingPointsReferee(BaseModel):
     pilot_id: int
     points: int
-
-
-class Photo(BaseModel):
-    data: bytes
-    format: Literal["png", "jpg", "jpeg"]
-    _file_name: str
-
-    @property
-    def file_name(self) -> str:
-        """Название файла с фото в S3"""
-        if self._file_name is None:
-            self._file_name = f"{uuid4()}.{self.format}"
-        return self._file_name

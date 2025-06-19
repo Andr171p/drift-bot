@@ -42,23 +42,23 @@ class S3Client(FileStorage):
         async with self.session.create_client(**self.config) as client:
             yield client
 
-    async def create_bucket(self, bucket_name: str) -> None:
+    async def create_bucket(self, bucket: str) -> None:
         try:
             async with self._get_client() as client:
-                await client.create_bucket(Bucket=bucket_name)
-            self.logger.info(f"Bucket {bucket_name} created successfully")
+                await client.create_bucket(Bucket=bucket)
+            self.logger.info(f"Bucket {bucket} created successfully")
         except Exception as e:
             self.logger.error(f"Error while creating bucket: {e}")
             raise RuntimeError(f"Error while creating bucket: {e}") from e
 
     async def upload_file(
             self,
-            file_data: bytes,
+            data: bytes,
             file_name: str,
-            bucket_name: str,
+            bucket: str,
             metadata: Optional[dict[str, Any]] = None
     ) -> None:
-        kwargs = {"Bucket": bucket_name, "Key": file_name, "Body": file_data}
+        kwargs = {"Bucket": bucket, "Key": file_name, "Body": data}
         if metadata is not None:
             kwargs["ExtraArgs"] = metadata
         try:
@@ -67,20 +67,20 @@ class S3Client(FileStorage):
         except Exception as e:
             raise UploadingFileError(f"Error while uploading file: {e}") from e
 
-    async def download_file(self, file_name: str, bucket_name: str) -> bytes:
+    async def download_file(self, file_name: str, bucket: str) -> bytes:
         try:
             async with self._get_client() as client:
-                response = await client.get_object(Bucket=bucket_name, Key=file_name)
+                response = await client.get_object(Bucket=bucket, Key=file_name)
                 body = response["Body"]
                 return await body.read()
         except Exception as e:
             self.logger.error(f"Error while receiving file: {e}")
             raise DownloadingFileError(f"Error while receiving file: {e}") from e
 
-    async def remove_file(self, file_name: str, bucket_name: str) -> str:
+    async def remove_file(self, file_name: str, bucket: str) -> str:
         try:
             async with self._get_client() as client:
-                await client.delete_object(Bucket=bucket_name, Key=file_name)
+                await client.delete_object(Bucket=bucket, Key=file_name)
             return file_name
         except Exception as e:
             self.logger.error(f"Error while deleting file: {e}")
