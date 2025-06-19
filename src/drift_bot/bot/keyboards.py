@@ -35,6 +35,13 @@ def admin_event_actions_kb(event_id: int, active: bool) -> InlineKeyboardMarkup:
         ).pack()
     )
     builder.button(
+        text="Пригласить судью 🔗",
+        callback_data=AdminEventCallback(
+            event_id=event_id,
+            action=AdminEventAction.INVITE_REFEREE
+        ).pack()
+    )
+    builder.button(
         text="Судьи ⚖️",
         callback_data=AdminEventCallback(
             event_id=event_id,

@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from aiogram import F, Router
-from aiogram.types import Message, CallbackQuery, BufferedInputFile
-from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
@@ -13,11 +13,13 @@ from ..enums import Confirmation, AdminEventAction
 from ..callbacks import ConfirmCallback, AdminEventCallback
 from ..keyboards import confirm_event_creation_kb, admin_event_actions_kb
 
+from ...core.enums import Role
 from ...core.domain import Event, Photo
 from ...core.dto import EventWithPhoto
-from ...core.services import CRUDService
+from ...core.services import CRUDService, ReferralService
 from ...core.base import EventRepository, FileStorage
-from ...templates import EVENT_TEMPLATE
+from ...templates import SUBMIT_EVENT_CREATION_MESSAGE
+from ...constants import EVENTS_BUCKET, BOT_URL
 
 
 events_router = Router(name=__name__)
@@ -72,7 +74,7 @@ async def enter_event_date(message: Message, state: FSMContext) -> None:
     date = datetime.strptime(message.text, "%d.%m.%Y %H:%M")
     await state.update_data(date=date)
     data = await state.get_data()
-    text = EVENT_TEMPLATE.format(
+    text = SUBMIT_EVENT_CREATION_MESSAGE.format(
         title=data["title"],
         description=data["description"],
         location=data["location"],
@@ -104,7 +106,9 @@ async def create_event(
         file_storage: Depends[FileStorage]
 ) -> None:
     event_service = CRUDService[Event, EventWithPhoto](
-        crud_repository=event_repository, file_storage=file_storage, bucket=...
+        crud_repository=event_repository,
+        file_storage=file_storage,
+        bucket=EVENTS_BUCKET
     )
     data = await state.get_data()
     event = Event(
@@ -129,9 +133,10 @@ async def send_events(
         file_storage: Depends[FileStorage]
 ) -> None:
     event_service = CRUDService[Event, EventWithPhoto](
-        crud_repository=event_repository, file_storage=file_storage, bucket=...
+        crud_repository=event_repository,
+        file_storage=file_storage,
+        bucket=EVENTS_BUCKET
     )
-    has_events = False
     async for event in event_service.read_all():
         text = EVENT_TEMPLATE.format(
             title=event.title,
@@ -175,3 +180,19 @@ async def toggle_registration(
         reply_markup=admin_event_actions_kb(event_id=event_id, active=updated_event.active)
     )
 
+
+@events_router.callback_query(
+    AdminEventCallback.filter(F.action == AdminEventAction.INVITE_REFEREE)
+)
+async def invite_referee(
+        call: CallbackQuery,
+        callback_data: AdminEventCallback,
+        referral_service: Depends[ReferralService]
+) -> None:
+    referral = await referral_service.create_referral(
+        event_id=callback_data.event_id,
+        admin_id=call.message.from_user.id,
+        role=Role.REFEREE
+    )
+    referral_link = f"{BOT_URL}?start={referral.code}"
+    await call.message.answer(f"Ваша реферальная ссылка:\n<code>{referral_link}</code>")

@@ -38,6 +38,7 @@ class ReferralOrm(Base):
     )
     code: Mapped[str] = mapped_column(unique=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime)
+    activated: Mapped[bool]
 
     user: Mapped["UserOrm"] = relationship(argument="UserOrm", back_populates="referrals")
     event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="referrals")

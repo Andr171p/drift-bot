@@ -10,5 +10,6 @@ class AdminEventAction(StrEnum):
     EDIT = "edit"
     DELETE = "delete"
     TOGGLE_REGISTRATION = "toggle_registration"
+    INVITE_REFEREE = "invite_referee"
     REFEREES_LIST = "referees_list"
     PILOTS_LIST = "pilots_list"

@@ -1,6 +1,5 @@
 from typing import Literal
 
-from enum import StrEnum
 from pathlib import Path
 
 
@@ -8,22 +7,6 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Переменные окружения
 ENV_PATH = BASE_DIR / ".env"
-
-
-class Role(StrEnum):
-    """Возможные роли пользователей"""
-    ADMIN = "ADMIN"          # Администратор
-    REFEREE = "REFEREE"      # Судья
-    PILOT = "PILOT"          # Пилот, участник гонки
-    DEVELOPER = "DEVELOPER"  # Доступен весь контент (используется для отладки)
-
-
-class Criterion(StrEnum):
-    """Судейские критерии"""
-    STYLE = "STYLE"  # Стиль
-    ANGLE = "ANGLE"  # Угол
-    LINE = "LINE"    # Траектория
-
 
 # Разрешённое количество попыток
 ATTEMPT = Literal[1, 2]
@@ -49,3 +32,5 @@ LIMIT = 3
 # Реферальная система:
 CODE_LENGTH = 16
 DAYS_EXPIRE = 3
+
+ADMIN_USERNAMES = []

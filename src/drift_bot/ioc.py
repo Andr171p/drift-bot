@@ -9,7 +9,6 @@ from aiogram.client.default import DefaultBotProperties
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .core.base import EventRepository, FileStorage
-from .core.services import EventService
 
 from .infrastructure.database.session import create_session_factory
 from .infrastructure.database.repositories import SQLEventRepository
@@ -52,14 +51,6 @@ class AppProvider(Provider):
             access_key=config.s3.S3_USER,
             secret_key=config.s3.S3_PASSWORD
         )
-
-    @provide(scope=Scope.REQUEST)
-    def get_event_service(
-            self,
-            event_repository: EventRepository,
-            file_storage: FileStorage
-    ) -> EventService:
-        return EventService(event_repository=event_repository, file_storage=file_storage)
 
 
 settings = Settings()

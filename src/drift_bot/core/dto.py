@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from .domain import Event, Pilot, Photo
+from .domain import Event, Pilot, Photo, User
 
 
 class EventWithPhoto(BaseModel):

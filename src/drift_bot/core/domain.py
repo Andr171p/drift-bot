@@ -4,7 +4,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from ..constants import ATTEMPT, Role, Criterion
+from .enums import Role, Criterion
+
+from ..constants import ATTEMPT
 
 
 class File(BaseModel):
@@ -28,10 +30,11 @@ class User(BaseModel):
 
 
 class Referral(BaseModel):
-    event_id: int         # ID мероприятия
-    admin_id: int         # ID админа
-    code: str             # Реферальный код, сгенерированная админом для приглашения на мероприятие
-    expires_at: datetime  # срок истечения ссылки
+    event_id: int            # ID мероприятия
+    admin_id: int            # ID админа
+    code: str                # Реферальный код, сгенерированная админом для приглашения на мероприятие
+    expires_at: datetime     # срок истечения ссылки
+    activated: bool = False  # Активирована ли ссылка
 
     model_config = ConfigDict(from_attributes=True)
 

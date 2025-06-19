@@ -44,4 +44,4 @@ class FileStorage(ABC):
     async def download_file(self, file_name: str, bucket: str) -> Optional[bytes]: pass
 
     @abstractmethod
-    async def remove_file(self, file_name: str, bucket: str) -> ...: pass
+    async def remove_file(self, file_name: str, bucket: str) -> None: pass

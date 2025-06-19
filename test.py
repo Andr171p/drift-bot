@@ -15,3 +15,10 @@ link = generate_referral_link()
 role, code = parse_referral_link(link)
 
 print(role.upper())
+
+
+def parse_referral_code(url: str) -> str:
+    return url.split("start=")[-1]
+
+
+print(parse_referral_code(link))

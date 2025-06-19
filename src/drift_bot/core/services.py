@@ -2,11 +2,16 @@ from typing import Sequence, Optional, Generic, TypeVar, Union
 from collections.abc import AsyncIterator
 
 import random
+import secrets
+from datetime import datetime, timedelta
 
-from .domain import Event, Pilot, Photo
+from .domain import Event, Pilot, Photo, Referral
 from .dto import CreatedEvent, CreatedPilot, EventWithPhoto, PilotWithPhoto
 from .base import FileStorage, CRUDRepository
+from .enums import Role
 from .exceptions import RanOutNumbersError
+
+from ..constants import CODE_LENGTH, DAYS_EXPIRE
 
 
 T = TypeVar("T", bound=Union[Event, Pilot])
@@ -55,8 +60,15 @@ class CRUDService(Generic[T, R]):
         file_name = model.file_name
         photo: Optional[Photo] = None
         if file_name:
-            data = await self._file_storage.download_file(file_name=file_name, bucket=self._bucket)
-            photo = Photo(data=data, file_name=file_name, format=file_name.split(".")[-1].lower())
+            data = await self._file_storage.download_file(
+                file_name=file_name,
+                bucket=self._bucket
+            )
+            photo = Photo(
+                data=data,
+                file_name=file_name,
+                format=file_name.split(".")[-1].lower()
+            )
         return model.attach_photo(photo)
 
     async def delete(self, id: int) -> bool:
@@ -73,6 +85,33 @@ class CRUDService(Generic[T, R]):
             file_name = model.file_name
             photo: Optional[Photo] = None
             if file_name:
-                data = await self._file_storage.download_file(file_name=file_name, bucket=self._bucket)
-                photo = Photo(data=data, file_name=file_name, format=file_name.split(".")[-1].lower())
+                data = await self._file_storage.download_file(
+                    file_name=file_name,
+                    bucket=self._bucket
+                )
+                photo = Photo(
+                    data=data,
+                    file_name=file_name,
+                    format=file_name.split(".")[-1].lower()
+                )
             yield model.attach_photo(photo)
+
+
+class ReferralService:
+    def __init__(self, referral_repository: CRUDRepository[Referral]) -> None:
+        self._referral_repository = referral_repository
+
+    @staticmethod
+    def generate_code(role: Role) -> str:
+        return f"{role.lower()}_{secrets.token_urlsafe(CODE_LENGTH)}"
+
+    async def create_referral(self, event_id: int, admin_id: int, role: Role) -> Referral:
+        code = self.generate_code(role)
+        referral = Referral(
+            event_id=event_id,
+            admin_id=admin_id,
+            code=code,
+            expires_at=datetime.now() + timedelta(days=DAYS_EXPIRE)
+        )
+        created_referral = await self._referral_repository.create(referral)
+        return created_referral
