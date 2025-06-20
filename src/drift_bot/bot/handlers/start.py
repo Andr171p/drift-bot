@@ -5,6 +5,7 @@ from aiogram.filters import Command
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ...chain import UserCreationContext, get_user_chain
+from ...core.enums import Role
 from ...core.domain import User, Referral
 from ...core.base import CRUDRepository
 from ...templates import (
@@ -18,9 +19,9 @@ start_router = Router(name=__name__)
 
 
 START_MESSAGES = {
-    "ADMIN": START_ADMIN_MESSAGE,
-    "REFEREE": START_REFEREE_MESSAGE,
-    "PILOT": START_PILOT_MESSAGE
+    Role.ADMIN: START_ADMIN_MESSAGE,
+    Role.REFEREE: START_REFEREE_MESSAGE,
+    Role.PILOT: START_PILOT_MESSAGE
 }
 
 
