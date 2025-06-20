@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Optional
 
 from datetime import datetime
 
@@ -17,10 +17,6 @@ class File(BaseModel):
     @property
     def size(self) -> int:
         return len(self.data) / (1024 * 1024)
-
-
-class Photo(File):
-    format: Literal["png", "jpg", "jpeg"]
 
 
 class User(BaseModel):
@@ -42,7 +38,8 @@ class Referral(BaseModel):
 class Competition(BaseModel):
     title: str
     description: Optional[str] = None
-    file_name: Optional[str] = None
+    photo_key: Optional[str] = None
+    regulation_key: Optional[str] = None  # Ключ на файл с регламентов.
     is_active: bool = False
     stages_count: int
 

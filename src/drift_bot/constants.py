@@ -35,3 +35,7 @@ CODE_LENGTH = 16
 DAYS_EXPIRE = 3
 
 ADMIN_USERNAMES = []
+
+# Кеширование
+MAX_SIZE = 1000
+TTL = 1

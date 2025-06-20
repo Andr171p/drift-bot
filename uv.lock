@@ -197,6 +197,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cachetools"
+version = "6.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/89/817ad5d0411f136c484d535952aef74af9b25e0d99e90cdffbe121e6d628/cachetools-6.1.0.tar.gz", hash = "sha256:b4c4f404392848db3ce7aac34950d17be4d864da4b8b66911008e430bc544587", size = 30714 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/f0/2ef431fe4141f5e334759d73e81120492b23b2824336883a91ac04ba710b/cachetools-6.1.0-py3-none-any.whl", hash = "sha256:1c7bb3cf9193deaf3508b7c5f2a79986c13ea38965c5adcff1f84519cf39163e", size = 11189 },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.4.26"
 source = { registry = "https://pypi.org/simple" }
@@ -254,6 +263,7 @@ dependencies = [
     { name = "aiogram-forms" },
     { name = "alembic" },
     { name = "asyncpg" },
+    { name = "cachetools" },
     { name = "dishka" },
     { name = "fastapi", extra = ["all"] },
     { name = "sqlalchemy" },
@@ -266,6 +276,7 @@ requires-dist = [
     { name = "aiogram-forms", specifier = ">=1.1.1" },
     { name = "alembic", specifier = ">=1.16.1" },
     { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "cachetools", specifier = ">=6.1.0" },
     { name = "dishka", specifier = ">=1.6.0" },
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.12" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },

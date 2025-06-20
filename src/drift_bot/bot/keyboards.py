@@ -4,8 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from .enums import Confirmation, AdminEventAction
 from .callbacks import (
     StartCallback,
-    ConfirmEventCreationCallback,
-    ConfirmJudgeRegistrationCallback,
+    ConfirmCallback,
     AdminEventCallback,
     JudgeRegistrationCallback,
     CriterionChoiceCallback,
@@ -30,20 +29,20 @@ def start_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def confirm_event_creation_kb() -> InlineKeyboardMarkup:
+def confirm_kb(callback: type[ConfirmCallback]) -> InlineKeyboardMarkup:
     """
-        Клавиатура для подтверждения создания мероприятия.
+        Клавиатура для подтверждения создания ресурса.
          - `Да` для создания
          - `нет` для отмены создания
     """
     builder = InlineKeyboardBuilder()
     builder.button(
         text="Да ✅",
-        callback_data=ConfirmEventCreationCallback(confirmation=Confirmation.YES).pack()
+        callback_data=callback(confirmation=Confirmation.YES).pack()
     )
     builder.button(
         text="Нет ❌",
-        callback_data=ConfirmEventCreationCallback(confirmation=Confirmation.NO).pack()
+        callback_data=callback(confirmation=Confirmation.NO).pack()
     )
     return builder.as_markup()
 
@@ -87,6 +86,7 @@ def admin_event_actions_kb(event_id: int, active: bool) -> InlineKeyboardMarkup:
             action=AdminEventAction.PILOTS_LIST
         ).pack()
     )
+    builder.adjust(1)
     return builder.as_markup()
 
 
@@ -108,18 +108,4 @@ def choose_criterion_kb() -> InlineKeyboardMarkup:
             text=CRITERION_TEXTS[criterion],
             callback_data=CriterionChoiceCallback(criterion=criterion)
         )
-    return builder.as_markup()
-
-
-def confirm_judge_registration_kb() -> InlineKeyboardMarkup:
-    """Клавиатура для подтверждения регистрации судьи."""
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Да ✅",
-        callback_data=ConfirmJudgeRegistrationCallback(confirmation=Confirmation.YES).pack()
-    )
-    builder.button(
-        text="Нет ❌",
-        callback_data=ConfirmJudgeRegistrationCallback(confirmation=Confirmation.NO).pack()
-    )
     return builder.as_markup()

@@ -1,11 +1,19 @@
-from typing import Optional
+from typing import Optional, Literal
 
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
 from .enums import Criterion
-from .domain import Event, Pilot, Judge, Photo
+from .domain import Event, Pilot, Judge, File
+
+
+class Photo(File):
+    format: Literal["png", "jpg", "jpeg"]
+
+
+class Document(File):
+    format: Literal["doc", "docx", "pdf"]
 
 
 class EventWithPhoto(BaseModel):

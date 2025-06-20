@@ -1,5 +1,3 @@
-from sys import prefix
-
 from aiogram.filters.callback_data import CallbackData
 
 from .enums import Confirmation, AdminEventAction
@@ -15,11 +13,11 @@ class ConfirmCallback(CallbackData, prefix="confirm"):
     confirmation: Confirmation
 
 
-class ConfirmEventCreationCallback(ConfirmCallback, prefix="event_creation"):
+class ConfirmCompetitionCallback(ConfirmCallback, prefix="competition"):
     pass
 
 
-class ConfirmJudgeRegistrationCallback(ConfirmCallback, prefix="judge_registration"):
+class ConfirmJudgeCallback(ConfirmCallback, prefix="judge"):
     pass
 
 

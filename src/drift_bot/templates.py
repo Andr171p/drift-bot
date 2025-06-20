@@ -5,6 +5,15 @@ ADMIN_COMMANDS_TEXT = """<b><u>Доступные команды</u></b>
  * /competitions - получает все соревнования
 """
 
+COMPETITION_TEMPLATE = """<b><u>Информация о соревнованиях</u></b>
+
+📌 <b>Название:</b> {title}
+📝 <b>Описание:</b> {description}
+🔢 <b>Количество этапов</b>: {stages_count}
+
+#competition #drift
+"""
+
 SUBMIT_EVENT_CREATION_TEMPLATE = """📌 <b>Название:</b> {title}
 📝 <b>Описание:</b> {description}
 📍 <b>Место:</b> {location}

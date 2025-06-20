@@ -3,13 +3,17 @@ from typing_extensions import ParamSpec
 from functools import wraps
 
 import logging
+from datetime import timedelta
 
 from aiogram.types import Message
+
+from cachetools import TTLCache
 
 from .core.enums import Role
 from .core.domain import User
 from .core.base import CRUDRepository
 from .core.exceptions import CreationError
+from .constants import MAX_SIZE, TTL
 from .ioc import container
 
 
@@ -19,6 +23,9 @@ logger = logging.getLogger(__name__)
 P = ParamSpec("P")  # Параметры оригинальной функции
 R = TypeVar("R")    # Возвращаемый тип оригинальной функции
 MessageHandler = Callable[P, Coroutine[Any, Any, R]]
+
+
+USERS_CACHE = TTLCache(maxsize=MAX_SIZE, ttl=timedelta(hours=TTL).total_seconds())
 
 
 def role_required(
