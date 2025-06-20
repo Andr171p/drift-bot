@@ -1,6 +1,6 @@
 
 
-SUBMIT_EVENT_CREATION_MESSAGE = """📌 <b>Название:</b> {title}
+SUBMIT_EVENT_CREATION_TEMPLATE = """📌 <b>Название:</b> {title}
 📝 <b>Описание:</b> {description}
 📍 <b>Место:</b> {location}
 🗺️ <b>Как добраться:</b> {map_link}
@@ -9,7 +9,13 @@ SUBMIT_EVENT_CREATION_MESSAGE = """📌 <b>Название:</b> {title}
 #event #drift
 """
 
-REGISTERED_PILOT_MESSAGE = """🏁 <b><u>Информация о пилоте</u></b> 🏁
+SUBMIT_JUDGE_REGISTRATION_TEMPLATE = """<b><u>Информация о судье<u></b>
+
+👤 <b>ФИО</b>: {full_name}
+🗳️ <b>Оцениваемый критерий</b>: {criterion}
+"""
+
+REGISTERED_PILOT_TEMPLATE = """🏁 <b><u>Информация о пилоте</u></b> 🏁
 
 👤 <b>ФИО:</b>: {full_name}
 🎂 <b>Возраст:</b> {age}
@@ -22,15 +28,28 @@ REGISTERED_PILOT_MESSAGE = """🏁 <b><u>Информация о пилоте</u
 #pilot #drift
 """
 
-START_ADMIN_MESSAGE = """<b><u>Доступные команды<u></b>
+START_ADMIN_MESSAGE = """<b><u>Доступные команды</u></b>
 
 <b>Мероприятия (Дрифт этапы, гонки, ивенты ...)
  * /create_event - Создаёт мероприятие
  * /events - Получить все созданные мероприятия
 """
 
-START_REFEREE_MESSAGE = """...
+START_PILOT_MESSAGE = """...
 """
 
-START_PILOT_MESSAGE = """...
+JUDGE_COMMANDS_MESSAGE = """<b><u>Доступные команды</u></b>
+
+ * /event - Ваше текущее мероприятие на которое вы зарегистрированы.
+ * /give_points - Выставить баллы за квалификацию.
+ * /vote - Проголосовать за пилота.
+ * /my_profile
+"""
+
+REGISTERED_JUDGE_TEMPLATE = """<b><u>Информация о судье<u></b>
+
+👤 <b>ФИО</b>: {full_name}
+🗳️ <b>Оцениваемый критерий</b>: {criterion}
+
+📅 <b>Дата регистрации</b>: {created_at}
 """

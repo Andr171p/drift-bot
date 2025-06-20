@@ -4,7 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from .domain import Event, Pilot, Photo, User
+from .enums import Criterion
+from .domain import Event, Pilot, Judge, Photo
 
 
 class EventWithPhoto(BaseModel):
@@ -54,6 +55,24 @@ class CreatedPilot(Pilot):
         return PilotWithPhoto(**self.model_dump(), photo=photo)
 
 
-class GivingPointsReferee(BaseModel):
-    pilot_id: int
-    points: int
+class PilotRegistration(BaseModel):
+    event_id: int
+    full_name: str
+    age: int
+    description: str
+    file_name: Optional[str] = None
+    car: str
+
+
+class CreatedJudge(Judge):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class JudgeWithPhoto(BaseModel):
+    event_id: int
+    full_name: str
+    photo: Optional[Photo]
+    criterion: Criterion
+    created_at: datetime

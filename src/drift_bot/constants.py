@@ -21,6 +21,7 @@ REFERRAL_LIFE_TIME = 3  # Дней
 # S3 бакеты для хранения файловых объектов
 EVENTS_BUCKET = "events"
 PILOTS_BUCKET = "pilots"
+JUDGES_BUCKET = "JUDGES"
 
 # Поддерживаемые форматы изображения
 SUPPORTED_IMAGE_FORMATS = {"png", "jpg", "jpeg"}

@@ -2,7 +2,8 @@ from typing import Generic, TypeVar, Optional, Any
 
 from abc import ABC, abstractmethod
 
-from .domain import Event, Referee, Pilot
+from .domain import Event, Judge, Pilot
+from .dto import CreatedEvent, CreatedPilot, CreatedJudge
 
 
 T = TypeVar("T")
@@ -21,13 +22,23 @@ class CRUDRepository(Generic[T]):
 
 
 class EventRepository(CRUDRepository[Event]):
-    async def paginate(self, page: int, limit: int) -> list[Event]: pass
+    async def paginate(self, page: int, limit: int) -> list[CreatedEvent]: pass
 
-    async def get_last(self) -> Event: pass
+    async def get_last(self) -> CreatedEvent: pass
 
-    async def get_referees(self, event_id: int) -> list[Referee]: pass
+    async def get_active(self) -> list[CreatedEvent]: pass
+
+    async def get_judges(self, event_id: int) -> list[Judge]: pass
 
     async def get_pilots(self, event_id: int) -> list[Pilot]: pass
+
+
+class PilotRepository(CRUDRepository[Pilot]):
+    async def get_by_user_id(self, user_id: int) -> Optional[CreatedPilot]: pass
+
+
+class JudgeRepository(CRUDRepository[Judge]):
+    async def get_by_user_id(self, user_id: int) -> Optional[CreatedJudge]: pass
 
 
 class FileStorage(ABC):

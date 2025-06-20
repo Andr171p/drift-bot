@@ -42,11 +42,11 @@ async def enter_event_title(message: Message, state: FSMContext) -> None:
 async def enter_event_description(message: Message, state: FSMContext) -> None:
     if message.text.lower() != "/skip":
         await state.update_data(description=message.text)
-    await state.set_state(EventForm.photo_id)
+    await state.set_state(EventForm.file_id)
     await message.answer("Загрузите фото (в формате png, jpg, jpeg): ")
 
 
-@events_router.message(EventForm.photo_id, F.photo)
+@events_router.message(EventForm.file_id, F.photo)
 async def enter_event_photo(message: Message, state: FSMContext) -> None:
     photo = message.photo[-1]
     photo_id = photo.file_id
@@ -118,7 +118,7 @@ async def create_event(
         map_link=data["map_link"],
         date=data["date"]
     )
-    file = await call.bot.get_file(file_id=data["photo_id"])
+    file = await call.bot.get_file(file_id=data["file_id"])
     file_data = await call.bot.download(file=file)
     file_format = file.file_path.split(".")[-1].lower()
     photo = Photo(data=file_data.read(), format=file_format)

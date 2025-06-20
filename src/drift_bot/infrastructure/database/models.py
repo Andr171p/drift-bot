@@ -9,11 +9,9 @@ from .base import Base
 class UserOrm(Base):
     __tablename__ = "users"
 
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
     username: Mapped[str | None] = mapped_column(nullable=True)
     role: Mapped[str]
-
-    referrals: Mapped[list["ReferralOrm"]] = relationship(back_populates="user")
 
     __table_args__ = (
         CheckConstraint(
@@ -40,7 +38,6 @@ class ReferralOrm(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     activated: Mapped[bool]
 
-    user: Mapped["UserOrm"] = relationship(argument="UserOrm", back_populates="referrals")
     event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="referrals")
 
 
@@ -55,19 +52,20 @@ class EventOrm(Base):
     date: Mapped[datetime] = mapped_column(DateTime)
     active: Mapped[bool]
 
-    referees: Mapped[list["RefereeOrm"]] = relationship(back_populates="event")
+    judges: Mapped[list["JudgesOrm"]] = relationship(back_populates="event")
     pilots: Mapped[list["PilotOrm"]] = relationship(back_populates="event")
     referrals: Mapped[list["ReferralOrm"]] = relationship(back_populates="event")
 
 
-class RefereeOrm(Base):
-    __tablename__ = "referees"
+class JudgesOrm(Base):
+    __tablename__ = "judges"
 
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=False)
     full_name: Mapped[str]
     criterion: Mapped[str]
 
-    event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="referees")
+    event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="judges")
 
     __table_args__ = (
         CheckConstraint("criterion IN ('STYLE', 'ANGLE', 'LINE')", "check_criterion"),
@@ -77,6 +75,7 @@ class RefereeOrm(Base):
 class PilotOrm(Base):
     __tablename__ = "pilots"
 
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=False, nullable=False)
     full_name: Mapped[str]
     age: Mapped[int]

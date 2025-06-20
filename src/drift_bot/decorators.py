@@ -6,10 +6,10 @@ import logging
 
 from aiogram.types import Message
 
+from .core.enums import Role
 from .core.domain import User
 from .core.base import CRUDRepository
 from .core.exceptions import CreationError
-from .constants import Role
 from .ioc import container
 
 
@@ -30,8 +30,8 @@ def role_required(
         @wraps(func)
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
             user_repository = await container.get(CRUDRepository[User])
-            telegram_id = message.from_user.id
-            user = await user_repository.read(telegram_id)
+            user_id = message.from_user.id
+            user = await user_repository.read(user_id)
             if user.role != role:
                 logger.warning(f"Required role: {role}")
                 await message.answer(error_message)
@@ -47,7 +47,7 @@ def save_user(role: Role) -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
             user_repository = await container.get(CRUDRepository[User])
             user = User(
-                telegram_id=message.from_user.id,
+                user_id=message.from_user.id,
                 username=message.from_user.username,
                 role=role
             )

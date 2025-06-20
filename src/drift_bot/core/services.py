@@ -5,18 +5,25 @@ import random
 import secrets
 from datetime import datetime, timedelta
 
-from .domain import Event, Pilot, Photo, Referral
-from .dto import CreatedEvent, CreatedPilot, EventWithPhoto, PilotWithPhoto
-from .base import FileStorage, CRUDRepository
 from .enums import Role
-from .exceptions import RanOutNumbersError
+from .base import FileStorage, CRUDRepository
+from .domain import Event, Pilot, Photo, Referral, Judge
+from .dto import (
+    CreatedEvent,
+    CreatedPilot,
+    CreatedJudge,
+    EventWithPhoto,
+    PilotWithPhoto,
+    JudgeWithPhoto
+)
+from .exceptions import RanOutNumbersError, CodeExpiredError
 
 from ..constants import CODE_LENGTH, DAYS_EXPIRE
 
 
-T = TypeVar("T", bound=Union[Event, Pilot])
-R = TypeVar("R", bound=Union[EventWithPhoto, PilotWithPhoto])
-CreatedModel = Union[CreatedEvent, CreatedPilot]
+T = TypeVar("T", bound=Union[Event, Pilot, Judge])
+R = TypeVar("R", bound=Union[EventWithPhoto, PilotWithPhoto, JudgeWithPhoto])
+CreatedModel = Union[CreatedEvent, CreatedPilot, CreatedJudge]
 
 
 class NumberGenerator:
@@ -45,7 +52,7 @@ class CRUDService(Generic[T, R]):
         self._file_storage = file_storage
         self._bucket = bucket
 
-    async def create(self, model: T, photo: Optional[Photo]) -> None:
+    async def create(self, model: T, photo: Optional[Photo]) -> Optional[R]:
         if photo:
             await self._file_storage.upload_file(
                 data=photo.data,
@@ -53,7 +60,8 @@ class CRUDService(Generic[T, R]):
                 bucket=self._bucket
             )
             model.file_name = photo.file_name
-        await self._crud_repository.create(model)
+        created_model: CreatedModel = await self._crud_repository.create(model)
+        return await self.read(created_model.id)
 
     async def read(self, id: int) -> Optional[R]:
         model: CreatedModel = await self._crud_repository.read(id)
@@ -115,3 +123,13 @@ class ReferralService:
         )
         created_referral = await self._referral_repository.create(referral)
         return created_referral
+
+    async def get_referral(self, code: str) -> Optional[Referral]:
+        now_time = datetime.now()
+        referral = await self._referral_repository.read(code)
+        if not referral:
+            return None
+        if referral.expires_at < now_time:
+            raise CodeExpiredError("Referral code has expired")
+        updated_referral = await self._referral_repository.update(referral.code, activated=True)
+        return updated_referral

@@ -1,6 +1,6 @@
 
 
-def parse_referral_link(referral_link: str) -> tuple[str, str]:
-    start_part = referral_link.split("start=")[1]
-    referee, code = start_part.split("_", 1)
-    return referee.upper(), code
+def parse_referral_code(url: str) -> str:
+    """Парсит реферальный код из стартовой ссылки."""
+    parts = url.split("start=")
+    return parts[-1] if len(parts) > 1 else ""

@@ -4,7 +4,7 @@ from enum import StrEnum
 class Role(StrEnum):
     """Возможные роли пользователей"""
     ADMIN = "ADMIN"          # Администратор
-    REFEREE = "REFEREE"      # Судья
+    JUDGE = "JUDGE"          # Судья
     PILOT = "PILOT"          # Пилот, участник гонки
     DEVELOPER = "DEVELOPER"  # Доступен весь контент (используется для отладки)
 

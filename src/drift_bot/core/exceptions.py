@@ -5,15 +5,19 @@ class RanOutNumbersError(Exception):
     pass
 
 
-class UploadingFileError(Exception):
+class FileStorageError(Exception):
     pass
 
 
-class DownloadingFileError(Exception):
+class UploadingFileError(FileStorageError):
     pass
 
 
-class RemovingFileError(Exception):
+class DownloadingFileError(FileStorageError):
+    pass
+
+
+class RemovingFileError(FileStorageError):
     pass
 
 
@@ -36,3 +40,11 @@ class UpdatingError(RepositoryError):
 class DeletingError(RepositoryError):
     pass
 
+
+class ServiceError(Exception):
+    pass
+
+
+class CodeExpiredError(ServiceError):
+    """Истёк реферальный код."""
+    pass
