@@ -108,3 +108,9 @@ class RegisteredPilot(Pilot):
     pilot_id: int
     number: int
     date: datetime
+
+
+class Notification(BaseModel):
+    user_id: int
+    message: str
+    file: Optional[File]

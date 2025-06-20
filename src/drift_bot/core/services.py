@@ -6,8 +6,8 @@ import secrets
 from datetime import datetime, timedelta
 
 from .enums import Role
-from .base import FileStorage, CRUDRepository
-from .domain import Event, Pilot, Photo, Referral, Judge
+from .base import FileStorage, CRUDRepository, Sender, UserRepository
+from .domain import Event, Pilot, Photo, Referral, Judge, File
 from .dto import (
     CreatedEvent,
     CreatedPilot,
@@ -136,5 +136,36 @@ class ReferralService:
 
 
 class NotificationService:
-    def __init__(self) -> None:
-        ...
+    def __init__(self, sender: Sender, user_repository: UserRepository) -> None:
+        self._sender = sender
+        self._user_repository = user_repository
+
+    async def notify(
+            self,
+            user_id: int,
+            message: str,
+            file: Optional[File],
+            **kwargs
+    ) -> None:
+        await self._sender.send(
+            recipient_id=user_id,
+            message=message,
+            file=file,
+            **kwargs
+        )
+
+    async def notify_by_role(
+            self,
+            role: Role,
+            message: str,
+            file: Optional[File],
+            **kwargs
+    ) -> None:
+        users = await self._user_repository.get_by_role(role)
+        for user in users:
+            await self._sender.send(
+                recipient_id=user.user_id,
+                message=message,
+                file=file,
+                **kwargs
+            )

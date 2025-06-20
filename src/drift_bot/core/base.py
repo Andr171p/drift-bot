@@ -2,8 +2,8 @@ from typing import Generic, TypeVar, Optional, Any
 
 from abc import ABC, abstractmethod
 
-from .enums import SendingStatus
-from .domain import Event, Judge, Pilot, File
+from .enums import Role
+from .domain import User, Event, Judge, Pilot, File
 from .dto import CreatedEvent, CreatedPilot, CreatedJudge
 
 
@@ -20,6 +20,10 @@ class CRUDRepository(Generic[T]):
     async def update(self, id: int | str, **kwargs) -> Optional[T]: pass
 
     async def delete(self, id: int | str) -> Optional[T]: pass
+
+
+class UserRepository(CRUDRepository[User]):
+    async def get_by_role(self, role: Role) -> list[User]: pass
 
 
 class EventRepository(CRUDRepository[Event]):
