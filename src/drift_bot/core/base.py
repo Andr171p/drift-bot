@@ -2,7 +2,8 @@ from typing import Generic, TypeVar, Optional, Any
 
 from abc import ABC, abstractmethod
 
-from .domain import Event, Judge, Pilot
+from .enums import SendingStatus
+from .domain import Event, Judge, Pilot, File
 from .dto import CreatedEvent, CreatedPilot, CreatedJudge
 
 
@@ -56,3 +57,14 @@ class FileStorage(ABC):
 
     @abstractmethod
     async def remove_file(self, file_name: str, bucket: str) -> None: pass
+
+
+class Sender(ABC):
+    @abstractmethod
+    async def send(
+            self,
+            recipient_id: int,
+            message: str,
+            file: Optional[File],
+            **kwargs
+    ) -> None: pass

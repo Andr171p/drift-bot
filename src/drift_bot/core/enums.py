@@ -14,3 +14,10 @@ class Criterion(StrEnum):
     STYLE = "STYLE"  # Стиль
     ANGLE = "ANGLE"  # Угол
     LINE = "LINE"    # Траектория
+
+
+class SendingStatus(StrEnum):
+    """Статус отправки"""
+    DELIVERED = "DELIVERED"
+    NOT_DELIVERED = "NOT_DELIVERED"
+    ERROR = "ERROR"

@@ -48,3 +48,7 @@ class ServiceError(Exception):
 class CodeExpiredError(ServiceError):
     """Истёк реферальный код."""
     pass
+
+
+class SendingMessageError(Exception):
+    pass

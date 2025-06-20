@@ -133,3 +133,8 @@ class ReferralService:
             raise CodeExpiredError("Referral code has expired")
         updated_referral = await self._referral_repository.update(referral.code, activated=True)
         return updated_referral
+
+
+class NotificationService:
+    def __init__(self) -> None:
+        ...
