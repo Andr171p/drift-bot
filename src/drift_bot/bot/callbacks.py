@@ -1,9 +1,14 @@
+from sys import prefix
 
 from aiogram.filters.callback_data import CallbackData
 
 from .enums import Confirmation, AdminEventAction
 
-from ..core.enums import Criterion
+from ..core.enums import Role, Criterion
+
+
+class StartCallback(CallbackData, prefix="start"):
+    role: Role
 
 
 class ConfirmCallback(CallbackData, prefix="confirm"):

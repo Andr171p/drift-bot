@@ -39,6 +39,26 @@ class Referral(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class Competition(BaseModel):
+    title: str
+    description: Optional[str] = None
+    file_name: Optional[str] = None
+    is_active: bool = False
+    stages_count: int
+
+
+class Stage(BaseModel):
+    competition_id: int  # ID соревнований
+    number: int          # Номер этапа
+    title: str
+    description: Optional[str] = None
+    file_name: Optional[str] = None
+    location: str
+    map_link: str
+    date: datetime
+    is_active: bool = False
+
+
 class Event(BaseModel):
     title: str                         # Название мероприятия
     description: Optional[str] = None  # Описание мероприятия
@@ -46,7 +66,7 @@ class Event(BaseModel):
     location: str                      # Место проведения
     map_link: Optional[str] = None     # Ссылка на карты/навигатор
     date: datetime                     # Дата проведения
-    active: bool = False               # True если гонка активна, False если завершилась или ещё не доступна
+    is_active: bool = False            # True если гонка активна, False если завершилась или ещё не доступна
 
     model_config = ConfigDict(from_attributes=True)
 

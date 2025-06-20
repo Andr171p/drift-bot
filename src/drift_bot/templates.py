@@ -1,5 +1,10 @@
 
 
+ADMIN_COMMANDS_TEXT = """<b><u>Доступные команды</u></b>
+ * /create_competition - создаёт соревнование
+ * /competitions - получает все соревнования
+"""
+
 SUBMIT_EVENT_CREATION_TEMPLATE = """📌 <b>Название:</b> {title}
 📝 <b>Описание:</b> {description}
 📍 <b>Место:</b> {location}

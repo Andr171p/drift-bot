@@ -24,13 +24,13 @@ class UserOrm(Base):
 class ReferralOrm(Base):
     __tablename__ = "referrals"
 
-    event_id: Mapped[int] = mapped_column(
-        ForeignKey("events.id"),
+    stage_id: Mapped[int] = mapped_column(
+        ForeignKey("stages.id"),
         unique=False,
         nullable=False
     )
     admin_id: Mapped[int] = mapped_column(
-        ForeignKey("users.telegram_id"),
+        ForeignKey("users.user_id"),
         unique=False,
         nullable=False
     )
@@ -38,34 +38,64 @@ class ReferralOrm(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     activated: Mapped[bool]
 
-    event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="referrals")
+    stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="referrals")
 
 
-class EventOrm(Base):
-    __tablename__ = "events"
+class CompetitionOrm(Base):
+    __tablename__ = "competitions"
 
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
     title: Mapped[str]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    photo_name: Mapped[str | None] = mapped_column(unique=True, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(unique=True, nullable=True)
+    is_active: Mapped[bool]
+    stages_count: Mapped[int]
+
+    stages: Mapped[list["StageOrm"]] = relationship(
+        back_populates="competition",
+        cascade="all, delete-orphan"
+    )
+
+
+class StageOrm(Base):
+    __tablename__ = "stages"
+
+    number: Mapped[int] = mapped_column(
+        ForeignKey("competitions.id"),
+        unique=False,
+        nullable=False
+    )
+    title: Mapped[str]
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(unique=True, nullable=True)
     location: Mapped[str]
     map_link: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime)
-    active: Mapped[bool]
+    is_active: Mapped[bool]
 
-    judges: Mapped[list["JudgesOrm"]] = relationship(back_populates="event")
-    pilots: Mapped[list["PilotOrm"]] = relationship(back_populates="event")
-    referrals: Mapped[list["ReferralOrm"]] = relationship(back_populates="event")
+    judges: Mapped[list["JudgesOrm"]] = relationship(
+        back_populates="stage",
+        cascade="all, delete-orphan"
+    )
+    pilots: Mapped[list["PilotOrm"]] = relationship(
+        back_populates="stage",
+        cascade="all, delete-orphan"
+    )
+    competition: Mapped["CompetitionOrm"] = relationship(
+        argument="StageOrm",
+        back_populates="stages"
+    )
 
 
 class JudgesOrm(Base):
     __tablename__ = "judges"
 
     user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
-    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=False)
+    stage_id: Mapped[int] = mapped_column(ForeignKey("stages.id"), unique=False)
     full_name: Mapped[str]
     criterion: Mapped[str]
 
-    event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="judges")
+    stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="judges")
 
     __table_args__ = (
         CheckConstraint("criterion IN ('STYLE', 'ANGLE', 'LINE')", "check_criterion"),
@@ -76,15 +106,15 @@ class PilotOrm(Base):
     __tablename__ = "pilots"
 
     user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
-    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), unique=False, nullable=False)
+    stage_id: Mapped[int] = mapped_column(ForeignKey("stages.id"), unique=False, nullable=False)
     full_name: Mapped[str]
     age: Mapped[int]
     description: Mapped[str] = mapped_column(Text)
-    photo_name: Mapped[str] = mapped_column(unique=True)
+    file_name: Mapped[str] = mapped_column(unique=True)
     car: Mapped[str]
     number: Mapped[int]
 
-    event: Mapped["EventOrm"] = relationship(argument="EventOrm", back_populates="pilots")
+    stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="pilots")
     qualifications: Mapped[list["QualificationOrm"]] = relationship(back_populates="pilot")
 
 

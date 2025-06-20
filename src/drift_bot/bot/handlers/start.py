@@ -1,50 +1,44 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup
+from aiogram.types import Message, CallbackQuery
 
-from dishka.integrations.aiogram import FromDishka as Depends
+from ..keyboards import start_keyboard
+from ..callbacks import StartCallback
 
 from ...core.enums import Role
-from ...core.domain import User
-from ...core.base import CRUDRepository
-from ...core.services import ReferralService
-from ...verification import UserVerificationContext, get_user_verification_chain
-from ...templates import (
-    START_ADMIN_MESSAGE,
-    START_JUDGE_MESSAGE,
-    START_PILOT_MESSAGE
-)
-
-from ..keyboards import register_judge_kb
+from ...decorators import save_user
 
 
 start_router = Router(name=__name__)
 
 
-START_MESSAGES: dict[Role, str] = {
-    Role.ADMIN: START_ADMIN_MESSAGE,
-    Role.JUDGE: START_JUDGE_MESSAGE,
-    Role.PILOT: START_PILOT_MESSAGE
-}
-
-START_KEYBOARDS: dict[Role, InlineKeyboardMarkup] = {
-    Role.JUDGE: register_judge_kb
-}
-
-
 @start_router.message(Command("start"))
-async def start(
-        message: Message,
-        user_repository: Depends[CRUDRepository[User]],
-        referral_service: Depends[ReferralService]
-) -> None:
-    context = UserVerificationContext(
-        user_repository=user_repository,
-        referral_service=referral_service
-    )
-    chain = get_user_verification_chain()
-    verified_user = await chain.handle(message, context)
+async def start(message: Message) -> None:
     await message.answer(
-        text=START_MESSAGES[verified_user.role],
-        reply_markup=START_KEYBOARDS.get(verified_user.role)
+        text="Здравствуйте, выберите кем вы являетесь ⬇️",
+        reply_markup=start_keyboard()
     )
+
+
+@start_router.callback_query(StartCallback.filter(F.role == Role.ADMIN))
+@save_user(Role.ADMIN)
+async def handle_admin(call: CallbackQuery) -> None:
+    await call.message.answer("""<b><u>Доступные команды</u></b>
+     * /create_competition - создаёт соревнование
+     * /competitions - получает все соревнования
+    """)
+
+
+@start_router.callback_query(StartCallback.filter(F.role == Role.JUDGE))
+@save_user(Role.JUDGE)
+async def handle_judge(call: CallbackQuery) -> None:
+    await call.message.answer("""<b><u>Доступные команды</u></b>
+     * /active_competitions - получает все активные соревнования.
+    """)
+
+
+@start_router.callback_query(StartCallback.filter(F.role == Role.PILOT))
+@save_user(Role.PILOT)
+async def handle_pilot(call: CallbackQuery) -> None:
+    await call.message.answer("""...
+    """)

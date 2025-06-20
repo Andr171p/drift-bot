@@ -3,6 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from .enums import Confirmation, AdminEventAction
 from .callbacks import (
+    StartCallback,
     ConfirmEventCreationCallback,
     ConfirmJudgeRegistrationCallback,
     AdminEventCallback,
@@ -10,7 +11,7 @@ from .callbacks import (
     CriterionChoiceCallback,
 )
 
-from ..core.enums import Criterion
+from ..core.enums import Role, Criterion
 
 
 CRITERION_TEXTS: dict[Criterion, str] = {
@@ -18,6 +19,15 @@ CRITERION_TEXTS: dict[Criterion, str] = {
     Criterion.LINE: "Траектория",
     Criterion.STYLE: "Стиль"
 }
+
+
+def start_keyboard() -> InlineKeyboardMarkup:
+    """Стартовая клавиатура для выбора роли."""
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Участник 🏎️", callback_data=StartCallback(role=Role.PILOT).pack())
+    builder.button(text="Судья ⚖️", callback_data=StartCallback(role=Role.JUDGE).pack())
+    builder.button(text="Администратор 📋👨‍💼", callback_data=StartCallback(role=Role.ADMIN).pack())
+    return builder.as_markup()
 
 
 def confirm_event_creation_kb() -> InlineKeyboardMarkup:
