@@ -6,6 +6,8 @@ from .domain import Competition
 from .dto import Photo, Document
 from .base import CRUDRepository, FileStorage
 
+from ..constants import COMPETITIONS_BUCKET
+
 
 class CompetitionCreationUseCase:
     def __init__(
@@ -23,12 +25,23 @@ class CompetitionCreationUseCase:
             document: Optional[Document]
     ) -> ...:
         if photo:
-            file_name = self.generate_file_name(photo.format)
+            photo_key = self.generate_file_name(photo.format)
             await self._file_storage.upload_file(
                 data=photo.data,
-                file_name=file_name,
-                bucket=...
+                key=photo_key,
+                bucket=COMPETITIONS_BUCKET
             )
+            competition.photo_key = photo_key
+        if document:
+            document_key = self.generate_file_name(document.format)
+            await self._file_storage.upload_file(
+                data=document.data,
+                key=document_key,
+                bucket=COMPETITIONS_BUCKET
+            )
+            competition.document_key = document_key
+        created_competition = await self._competition_repository.create(competition)
+        return ...
 
     @staticmethod
     def generate_file_name(format: str) -> str:

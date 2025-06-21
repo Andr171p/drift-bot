@@ -19,9 +19,9 @@ BOT_URL = f"https://t.me/{BOT_NAME}"
 REFERRAL_LIFE_TIME = 3  # Дней
 
 # S3 бакеты для хранения файловых объектов
-EVENTS_BUCKET = "events"
+COMPETITIONS_BUCKET = "competitions"
 PILOTS_BUCKET = "pilots"
-JUDGES_BUCKET = "JUDGES"
+JUDGES_BUCKET = "judges"
 
 # Поддерживаемые форматы изображения
 SUPPORTED_IMAGE_FORMATS = {"png", "jpg", "jpeg"}

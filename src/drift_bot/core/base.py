@@ -51,16 +51,16 @@ class FileStorage(ABC):
     async def upload_file(
             self,
             data: bytes,
-            file_name: str,
+            key: str,
             bucket: str,
             metadata: Optional[dict[str, Any]] = None
     ) -> None: pass
 
     @abstractmethod
-    async def download_file(self, file_name: str, bucket: str) -> Optional[bytes]: pass
+    async def download_file(self, key: str, bucket: str) -> Optional[bytes]: pass
 
     @abstractmethod
-    async def remove_file(self, file_name: str, bucket: str) -> None: pass
+    async def remove_file(self, key: str, bucket: str) -> None: pass
 
 
 class Sender(ABC):
