@@ -35,11 +35,11 @@ class SQLUserRepository(CRUDRepository[User]):
             await self.session.rollback()
             raise CreationError(f"Error while creating user: {e}")
 
-    async def read(self, telegram_id: int) -> Optional[User]:
+    async def read(self, user_id: int) -> Optional[User]:
         try:
             stmt = (
                 select(UserOrm)
-                .where(UserOrm.telegram_id == telegram_id)
+                .where(UserOrm.user_id == user_id)
             )
             result = await self.session.execute(stmt)
             user = result.scalar_one_or_none()
@@ -48,12 +48,12 @@ class SQLUserRepository(CRUDRepository[User]):
             await self.session.rollback()
             raise ReadingError(f"Error while reading user: {e}")
 
-    async def update(self, telegram_id: int, **kwargs) -> Optional[User]:
+    async def update(self, user_id: int, **kwargs) -> Optional[User]:
         try:
             stmt = (
                 update(UserOrm)
                 .values(**kwargs)
-                .where(UserOrm.telegram_id == telegram_id)
+                .where(UserOrm.user_id == user_id)
                 .returning(UserOrm)
             )
             result = await self.session.execute(stmt)
@@ -64,11 +64,11 @@ class SQLUserRepository(CRUDRepository[User]):
             await self.session.rollback()
             raise UpdatingError(f"Error while updating user: {e}") from e
 
-    async def delete(self, telegram_id: int) -> bool:
+    async def delete(self, user_id: int) -> bool:
         try:
             stmt = (
                 delete(UserOrm)
-                .where(UserOrm.telegram_id == telegram_id)
+                .where(UserOrm.user_id == user_id)
             )
             result = await self.session.execute(stmt)
             await self.session.commit()

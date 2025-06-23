@@ -5,5 +5,5 @@ __all__ = (
 )
 
 from .user import SQLUserRepository
-from .event import SQLEventRepository
+from .championship import SQLEventRepository
 from .referral import SQLReferralRepository

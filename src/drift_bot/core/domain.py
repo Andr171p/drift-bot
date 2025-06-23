@@ -68,7 +68,7 @@ class User(BaseModel):
 
 
 class Referral(BaseModel):
-    event_id: int            # ID мероприятия
+    stage_id: int            # ID этапа
     admin_id: int            # ID админа
     code: str                # Реферальный код, сгенерированная админом для приглашения на мероприятие
     expires_at: datetime     # срок истечения ссылки

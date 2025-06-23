@@ -15,8 +15,8 @@ class UserOrm(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "role IN ('ADMIN', 'REFEREE', 'PILOT', 'DEVELOPER')",
-            "check_role"
+            "role IN ('ADMIN', 'JUDGE', 'PILOT', 'DEVELOPER')",
+            "check_user_role"
         ),
     )
 
@@ -41,18 +41,31 @@ class ReferralOrm(Base):
     stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="referrals")
 
 
-class CompetitionOrm(Base):
-    __tablename__ = "competitions"
+class FileMetadataOrm(Base):
+    __tablename__ = "file_metadata"
+
+    key: Mapped[str]
+    bucket: Mapped[str]
+    size: Mapped[float]
+    format: Mapped[str]
+    type: Mapped[str]
+    uploaded_date: Mapped[datetime] = mapped_column(DateTime)
+
+    parent_type: Mapped[str]
+    parent_id: Mapped[int]
+
+
+class ChampionshipOrm(Base):
+    __tablename__ = "championships"
 
     user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
     title: Mapped[str]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    file_name: Mapped[str | None] = mapped_column(unique=True, nullable=True)
     is_active: Mapped[bool]
     stages_count: Mapped[int]
 
     stages: Mapped[list["StageOrm"]] = relationship(
-        back_populates="competition",
+        back_populates="championship",
         cascade="all, delete-orphan"
     )
 
@@ -60,14 +73,14 @@ class CompetitionOrm(Base):
 class StageOrm(Base):
     __tablename__ = "stages"
 
-    number: Mapped[int] = mapped_column(
-        ForeignKey("competitions.id"),
+    championship_id: Mapped[int] = mapped_column(
+        ForeignKey("championships.id"),
         unique=False,
         nullable=False
     )
+    number: Mapped[int]
     title: Mapped[str]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    file_name: Mapped[str | None] = mapped_column(unique=True, nullable=True)
     location: Mapped[str]
     map_link: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime)
@@ -81,7 +94,7 @@ class StageOrm(Base):
         back_populates="stage",
         cascade="all, delete-orphan"
     )
-    competition: Mapped["CompetitionOrm"] = relationship(
+    championship: Mapped["ChampionshipOrm"] = relationship(
         argument="StageOrm",
         back_populates="stages"
     )
@@ -102,6 +115,17 @@ class JudgesOrm(Base):
     )
 
 
+class CarOrm(Base):
+    __tablename__ = "cars"
+
+    pilot_id: Mapped[int] = mapped_column(ForeignKey("pilots.id"), unique=False)
+    type: Mapped[str]
+    plate: Mapped[str | None] = mapped_column(nullable=True)
+    hp: Mapped[int]
+
+    pilot: Mapped["PilotOrm"] = relationship(argument="PilotOrm", back_populates="cars")
+
+
 class PilotOrm(Base):
     __tablename__ = "pilots"
 
@@ -109,9 +133,8 @@ class PilotOrm(Base):
     stage_id: Mapped[int] = mapped_column(ForeignKey("stages.id"), unique=False, nullable=False)
     full_name: Mapped[str]
     age: Mapped[int]
-    description: Mapped[str] = mapped_column(Text)
-    file_name: Mapped[str] = mapped_column(unique=True)
-    car: Mapped[str]
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cars: Mapped[list["CarOrm"]] = relationship(back_populates="pilot")
     number: Mapped[int]
 
     stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="pilots")
