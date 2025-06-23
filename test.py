@@ -1,7 +1,15 @@
 import secrets
 
 from src.drift_bot.constants import BOT_URL
-from src.drift_bot.utils import parse_referral_link
+from src.drift_bot.utils import parse_referral_code
+from src.drift_bot.core.domain import Championship
+
+competition = Championship(
+    title="...",
+    description="...",
+    stages_count=1
+)
+print("OK" if [] else "NO")
 
 
 def generate_referral_link() -> str:
@@ -12,13 +20,9 @@ def generate_referral_link() -> str:
 
 link = generate_referral_link()
 
-role, code = parse_referral_link(link)
+role, code = parse_referral_code(link)
 
 print(role.upper())
-
-
-def parse_referral_code(url: str) -> str:
-    return url.split("start=")[-1]
 
 
 print(parse_referral_code(link))

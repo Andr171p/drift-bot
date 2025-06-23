@@ -12,5 +12,6 @@ dependencies = [
     "cachetools>=6.1.0",
     "dishka>=1.6.0",
     "fastapi[all]>=0.115.12",
+    "mypy>=1.16.1",
     "sqlalchemy>=2.0.41",
 ]

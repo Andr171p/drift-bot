@@ -19,12 +19,13 @@ BOT_URL = f"https://t.me/{BOT_NAME}"
 REFERRAL_LIFE_TIME = 3  # Дней
 
 # S3 бакеты для хранения файловых объектов
-COMPETITIONS_BUCKET = "competitions"
+CHAMPIONSHIPS_BUCKET = "competitions"
 PILOTS_BUCKET = "pilots"
 JUDGES_BUCKET = "judges"
 
 # Поддерживаемые форматы изображения
-SUPPORTED_IMAGE_FORMATS = {"png", "jpg", "jpeg"}
+PHOTO_FORMATS: set[str] = {"png", "jpg", "jpeg"}
+DOCUMENT_FORMATS: set[str] = {"doc", "docx", "pdf"}
 
 # Пагинация
 FIRST_PAGE = 1
@@ -34,8 +35,13 @@ LIMIT = 3
 CODE_LENGTH = 16
 DAYS_EXPIRE = 3
 
-ADMIN_USERNAMES = []
+ADMIN_USERNAMES: list[str] = []
 
 # Кеширование
 MAX_SIZE = 1000
 TTL = 1
+
+# Соревнования
+MIN_STAGES_COUNT = 1
+MIN_TITLE_LENGTH = 1
+MAX_TITLE_LENGTH = 100

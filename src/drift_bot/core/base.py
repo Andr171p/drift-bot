@@ -3,7 +3,7 @@ from typing import Generic, TypeVar, Optional, Any
 from abc import ABC, abstractmethod
 
 from .enums import Role
-from .domain import User, Event, Judge, Pilot, File
+from .domain import User, Judge, Pilot, File, Stage
 from .dto import CreatedEvent, CreatedPilot, CreatedJudge
 
 
@@ -26,7 +26,7 @@ class UserRepository(CRUDRepository[User]):
     async def get_by_role(self, role: Role) -> list[User]: pass
 
 
-class EventRepository(CRUDRepository[Event]):
+class StageRepository(CRUDRepository[Stage]):
     async def paginate(self, page: int, limit: int) -> list[CreatedEvent]: pass
 
     async def get_last(self) -> CreatedEvent: pass
