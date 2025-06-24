@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import insert, select, and_
+from sqlalchemy import insert, select, and_, delete
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +9,7 @@ from ..models import ChampionshipOrm, FileMetadataOrm
 
 from src.drift_bot.core.domain import Championship, FileMetadata
 from src.drift_bot.core.base import CRUDRepository
-from src.drift_bot.core.exceptions import (
-    CreationError,
-    ReadingError,
-    UpdatingError,
-    DeletingError
-)
+from src.drift_bot.core.exceptions import CreationError, ReadingError, DeletingError
 
 
 PARENT_TYPE = "championship"
@@ -99,3 +94,28 @@ class SQLChampionshipRepository(CRUDRepository[Championship]):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading championship: {e}") from e
+
+    async def delete(self, id: int) -> bool:
+        try:
+            cte = (
+                delete(FileMetadataOrm)
+                .where(
+                    and_(
+                        FileMetadataOrm.parent_type == PARENT_TYPE,
+                        FileMetadataOrm.parent_id == id
+                    )
+                )
+                .returning(FileMetadataOrm.id)
+                .cte("delete_file_metadata")
+            )
+            stmt = (
+                delete(ChampionshipOrm)
+                .where(ChampionshipOrm.id == id)
+                .where(ChampionshipOrm.id.in_(select(cte.c.parent_id)))
+            )
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            return result.rowcount > 0
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DeletingError(f"Error while deleting championship: {e}") from e

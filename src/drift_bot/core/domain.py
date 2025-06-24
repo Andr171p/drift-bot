@@ -85,6 +85,9 @@ class Championship(BaseModel):
     is_active: bool = Field(default=False)                   # Активен ли чемпионат
     stages_count: int = Field(..., ge=MIN_STAGES_COUNT)      # Количество этапов
 
+    created_at: Optional[datetime] = None                    # Дата создания (присваивается БД)
+    updated_at: Optional[datetime] = None                    # Дата обновления (присваивается БД)
+
     model_config = ConfigDict(from_attributes=True)
 
 

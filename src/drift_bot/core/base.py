@@ -19,7 +19,7 @@ class CRUDRepository(Generic[T]):
 
     async def update(self, id: int | str, **kwargs) -> Optional[T]: pass
 
-    async def delete(self, id: int | str) -> Optional[T]: pass
+    async def delete(self, id: int | str) -> bool: pass
 
 
 class UserRepository(CRUDRepository[User]):
