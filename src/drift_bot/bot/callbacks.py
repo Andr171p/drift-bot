@@ -13,7 +13,7 @@ class ConfirmCallback(CallbackData, prefix="confirm"):
     confirmation: Confirmation
 
 
-class ConfirmCompetitionCallback(ConfirmCallback, prefix="competition"):
+class ConfirmChampionshipCreationCallback(ConfirmCallback, prefix="competition"):
     pass
 
 

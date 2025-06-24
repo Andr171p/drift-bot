@@ -1,9 +1,9 @@
 __all__ = (
     "SQLUserRepository",
-    "SQLEventRepository",
+    "SQLChampionshipRepository",
     "SQLReferralRepository"
 )
 
 from .user import SQLUserRepository
-from .championship import SQLEventRepository
+from .championship import SQLChampionshipRepository
 from .referral import SQLReferralRepository

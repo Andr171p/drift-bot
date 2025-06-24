@@ -1,66 +1,68 @@
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.enums.parse_mode import ParseMode
 from aiogram.types import Message, CallbackQuery, BufferedInputFile
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
+from ..utils import get_file
 from ..enums import Confirmation
-from ..states import CompetitionForm
+from ..states import ChampionshipForm
 from ..keyboards import confirm_kb
-from ..callbacks import ConfirmCompetitionCallback
+from ..callbacks import ConfirmChampionshipCreationCallback
 
 from ...templates import COMPETITION_TEMPLATE
 from ...decorators import role_required
 from ...core.enums import Role
+from ...core.domain import Championship, File
+from ...core.use_cases import ChampionshipCreationUseCase
 
 
-competition_router = Router(name=__name__)
+championships_router = Router(name=__name__)
 
 
-@competition_router.message(Command("/create_competition"))
+@championships_router.message(Command("/create_championship"))
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def send_competition_form(message: Message, state: FSMContext) -> None:
-    await state.set_state(CompetitionForm.title)
+async def send_championship_form(message: Message, state: FSMContext) -> None:
+    await state.set_state(ChampionshipForm.title)
     await message.answer("Укажите название соревнования: ")
 
 
-@competition_router.message(CompetitionForm.title)
+@championships_router.message(ChampionshipForm.title)
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def enter_competition_title(message: Message, state: FSMContext) -> None:
+async def enter_championship_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text)
-    await state.set_state(CompetitionForm.description)
+    await state.set_state(ChampionshipForm.description)
     await message.answer("Добавьте описание: ")
 
 
-@competition_router.message(CompetitionForm.description)
+@championships_router.message(ChampionshipForm.description)
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def enter_competition_description(message: Message, state: FSMContext) -> None:
+async def enter_championship_description(message: Message, state: FSMContext) -> None:
     await state.update_data(description=message.text)
-    await state.set_state(CompetitionForm.photo_id)
+    await state.set_state(ChampionshipForm.photo_id)
     await message.answer("Прикрепите фото (или нажмите /skip чтобы пропустить): ")
 
 
-@competition_router.message(CompetitionForm.photo_id, F.photo)
+@championships_router.message(ChampionshipForm.photo_id, F.photo)
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def attach_competition_photo(message: Message, state: FSMContext) -> None:
+async def attach_championship_photo(message: Message, state: FSMContext) -> None:
     if message.text != "/skip":
         await state.update_data(photo_id=message.photo[-1].file_id)
-    await state.set_state(CompetitionForm.document_id)
+    await state.set_state(ChampionshipForm.document_id)
     await message.answer("Прикрепите регламент соревнований (или нажмите /skip чтобы пропустить): ")
 
 
-@competition_router.message(CompetitionForm.document_id, F.document)
+@championships_router.message(ChampionshipForm.document_id, F.document)
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def attach_competition_regulation(message: Message, state: FSMContext) -> None:
+async def attach_championship_regulation(message: Message, state: FSMContext) -> None:
     if message.text != "/skip":
         await state.update_data(docuement_id=message.document.file_id)
-    await state.set_state(CompetitionForm.stages_count)
+    await state.set_state(ChampionshipForm.stages_count)
     await message.answer("Укажите количество этапов (напишите только число): ")
 
 
-@competition_router.message(CompetitionForm.stages_count)
+@championships_router.message(ChampionshipForm.stages_count)
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
 async def indicate_stages_count(message: Message, state: FSMContext) -> None:
     await state.update_data(stages_count=int(message.text))
@@ -72,12 +74,12 @@ async def indicate_stages_count(message: Message, state: FSMContext) -> None:
             description=data["description"],
             stages_count=data["stages_count"]
         ),
-        reply_markup=confirm_kb(ConfirmCompetitionCallback)
+        reply_markup=confirm_kb(ConfirmChampionshipCreationCallback)
     )
 
 
-@competition_router.callback_query(
-    ConfirmCompetitionCallback.filter(F.confirmation == Confirmation.NO)
+@championships_router.callback_query(
+    ConfirmChampionshipCreationCallback.filter(F.confirmation == Confirmation.NO)
 )
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
 async def cancel_competition_creation(call: CallbackQuery, state: FSMContext) -> None:
@@ -85,12 +87,24 @@ async def cancel_competition_creation(call: CallbackQuery, state: FSMContext) ->
     await call.message.answer("❌ Создание отменено.")
 
 
-@competition_router.callback_query(
-    ConfirmCompetitionCallback.filter(F.confirmation == Confirmation.YES)
+@championships_router.callback_query(
+    ConfirmChampionshipCreationCallback.filter(F.confirmation == Confirmation.YES)
 )
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
 async def create_competition(
         call: CallbackQuery,
         state: FSMContext,
+        championship_creation_use_case: Depends[ChampionshipCreationUseCase]
 ) -> None:
-    ...
+    data = await state.get_data()
+    photo_id, document_id = data.get("photo_id"), data.get("document_id")
+    files: list[File] = []
+    for file_id in (photo_id, document_id):
+        file = await get_file(file_id, call)
+        files.append(file)
+    championship = Championship(
+        title=data["title"],
+        description=data["description"],
+        stages_count=data["stages_count"]
+    )
+    created_championship = await championship_creation_use_case.execute(championship, files)

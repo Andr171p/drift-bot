@@ -22,7 +22,7 @@ class ChampionshipCreationUseCase:
             self,
             championship: Championship,
             files: Optional[list[File]] = None
-    ) -> ...:
+    ) -> Championship:
         files_metadata: list[FileMetadata] = []
         if files:
             for file in files:

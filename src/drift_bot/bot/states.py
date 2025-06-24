@@ -1,7 +1,7 @@
 from aiogram.fsm.state import StatesGroup, State
 
 
-class CompetitionForm(StatesGroup):
+class ChampionshipForm(StatesGroup):
     title = State()         # Название мероприятия
     description = State()   # Описание (опционально)
     photo_id = State()      # Фото (опционально)
