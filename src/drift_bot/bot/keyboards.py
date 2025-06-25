@@ -26,6 +26,7 @@ def start_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="🏎️ Участник", callback_data=StartCallback(role=Role.PILOT).pack())
     builder.button(text="⚖️ Судья", callback_data=StartCallback(role=Role.JUDGE).pack())
     builder.button(text="📋👨‍💼 Администратор", callback_data=StartCallback(role=Role.ADMIN).pack())
+    builder.adjust(1)
     return builder.as_markup()
 
 

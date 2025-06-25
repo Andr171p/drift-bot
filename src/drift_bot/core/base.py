@@ -1,10 +1,11 @@
 from typing import Generic, TypeVar, Optional, Any
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from .enums import Role
-from .domain import User, Judge, Pilot, File, Stage
-from .dto import CreatedEvent, CreatedPilot, CreatedJudge
+from .domain import User, Judge, Pilot, File, Stage, Championship
+from .dto import ActiveChampionship
 
 
 T = TypeVar("T")
@@ -26,24 +27,20 @@ class UserRepository(CRUDRepository[User]):
     async def get_by_role(self, role: Role) -> list[User]: pass
 
 
+class ChampionshipRepository(CRUDRepository[Championship]):
+    async def get_active(self) -> list[ActiveChampionship]: pass
+
+
 class StageRepository(CRUDRepository[Stage]):
-    async def paginate(self, page: int, limit: int) -> list[CreatedEvent]: pass
-
-    async def get_last(self) -> CreatedEvent: pass
-
-    async def get_active(self) -> list[CreatedEvent]: pass
-
-    async def get_judges(self, event_id: int) -> list[Judge]: pass
-
-    async def get_pilots(self, event_id: int) -> list[Pilot]: pass
+    async def get_nearest(self, date: datetime) -> Optional[Stage]: pass
 
 
 class PilotRepository(CRUDRepository[Pilot]):
-    async def get_by_user_id(self, user_id: int) -> Optional[CreatedPilot]: pass
+    async def get_by_user_id(self, user_id: int) -> Optional[Pilot]: pass
 
 
 class JudgeRepository(CRUDRepository[Judge]):
-    async def get_by_user_id(self, user_id: int) -> Optional[CreatedJudge]: pass
+    async def get_by_user_id(self, user_id: int) -> Optional[Judge]: pass
 
 
 class FileStorage(ABC):

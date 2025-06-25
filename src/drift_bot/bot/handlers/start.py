@@ -2,11 +2,11 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 
+from ..decorators import save_user
 from ..keyboards import start_keyboard
 from ..callbacks import StartCallback
 
 from ...core.enums import Role
-from ...decorators import save_user
 
 
 start_router = Router(name=__name__)
