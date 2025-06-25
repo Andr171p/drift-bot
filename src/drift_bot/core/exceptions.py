@@ -33,11 +33,11 @@ class ReadingError(RepositoryError):
     pass
 
 
-class UpdatingError(RepositoryError):
+class UpdateError(RepositoryError):
     pass
 
 
-class DeletingError(RepositoryError):
+class DeletionError(RepositoryError):
     pass
 
 

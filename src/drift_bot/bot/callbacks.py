@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 
-from .enums import Confirmation, AdminEventAction
+from .enums import Confirmation, AdminChampionshipAction
 
 from ..core.enums import Role, Criterion
 
@@ -13,21 +13,17 @@ class ConfirmCallback(CallbackData, prefix="confirm"):
     confirmation: Confirmation
 
 
-class ConfirmChampionshipCreationCallback(ConfirmCallback, prefix="competition"):
+class ConfirmChampionshipCreationCallback(ConfirmCallback, prefix="championship_creation"):
     pass
 
 
-class ConfirmJudgeCallback(ConfirmCallback, prefix="judge"):
+class ConfirmJudgeRegistrationCallback(ConfirmCallback, prefix="judge_registration"):
     pass
 
 
-class AdminEventCallback(CallbackData, prefix="event"):
-    event_id: int
-    action: AdminEventAction
-
-
-class JudgeRegistrationCallback(CallbackData, prefix="register_judge"):
-    event_id: int
+class AdminChampionshipCallback(CallbackData, prefix="championship"):
+    championship_id: int
+    action: AdminChampionshipAction
 
 
 class CriterionChoiceCallback(CallbackData, prefix="criterion_choice"):

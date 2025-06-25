@@ -1,13 +1,12 @@
-from aiogram.types import InlineKeyboardMarkup
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
-from .enums import Confirmation, AdminEventAction
+from .enums import Confirmation, AdminChampionshipAction
 from .callbacks import (
     StartCallback,
     ConfirmCallback,
-    AdminEventCallback,
-    JudgeRegistrationCallback,
     CriterionChoiceCallback,
+    AdminChampionshipCallback
 )
 
 from ..core.enums import Role, Criterion
@@ -23,9 +22,9 @@ CRITERION_TEXTS: dict[Criterion, str] = {
 def start_keyboard() -> InlineKeyboardMarkup:
     """Стартовая клавиатура для выбора роли."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="Участник 🏎️", callback_data=StartCallback(role=Role.PILOT).pack())
-    builder.button(text="Судья ⚖️", callback_data=StartCallback(role=Role.JUDGE).pack())
-    builder.button(text="Администратор 📋👨‍💼", callback_data=StartCallback(role=Role.ADMIN).pack())
+    builder.button(text="🏎️ Участник", callback_data=StartCallback(role=Role.PILOT).pack())
+    builder.button(text="⚖️ Судья", callback_data=StartCallback(role=Role.JUDGE).pack())
+    builder.button(text="📋👨‍💼 Администратор", callback_data=StartCallback(role=Role.ADMIN).pack())
     return builder.as_markup()
 
 
@@ -47,56 +46,24 @@ def confirm_kb(callback: type[ConfirmCallback]) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def admin_event_actions_kb(event_id: int, active: bool) -> InlineKeyboardMarkup:
-    """Клавиатура администратора для работы, взаимодействия с событием."""
+def admin_championship_actions_kb(championship_id: int) -> InlineKeyboardMarkup:
+    """Клавиатура администратора для взаимодействия с чемпионатом."""
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="Редактировать ✏️",
-        callback_data=AdminEventCallback(event_id=event_id, action=AdminEventAction.EDIT).pack()
-    )
-    builder.button(
-        text="Удалить 🗑️",
-        callback_data=AdminEventCallback(event_id=event_id, action=AdminEventAction.DELETE).pack()
-    )
-    builder.button(
-        text="Открыть регистрацию 🚀" if active else "Закрыть регистрацию 🔒",
-        callback_data=AdminEventCallback(
-            event_id=event_id,
-            action=AdminEventAction.TOGGLE_REGISTRATION
+        text="🗑️ Удалить",
+        callback_data=AdminChampionshipCallback(
+            championship_id=championship_id,
+            action=AdminChampionshipAction.DELETE
         ).pack()
     )
     builder.button(
-        text="Пригласить судью 🔗",
-        callback_data=AdminEventCallback(
-            event_id=event_id,
-            action=AdminEventAction.INVITE_REFEREE
-        ).pack()
-    )
-    builder.button(
-        text="Судьи ⚖️",
-        callback_data=AdminEventCallback(
-            event_id=event_id,
-            action=AdminEventAction.REFEREES_LIST
-        ).pack()
-    )
-    builder.button(
-        text="Пилоты 🏎️",
-        callback_data=AdminEventCallback(
-            event_id=event_id,
-            action=AdminEventAction.PILOTS_LIST
+        text="➕ Добавить этап",
+        callback_data=AdminChampionshipCallback(
+            championship_id=championship_id,
+            action=AdminChampionshipAction.ADD_STAGE
         ).pack()
     )
     builder.adjust(1)
-    return builder.as_markup()
-
-
-def register_judge_kb(event_id: int) -> InlineKeyboardMarkup:
-    """Клавиатура для регистрации судьи на этап."""
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Зарегистрироваться 🔣",
-        callback_data=JudgeRegistrationCallback(event_id=event_id).pack()
-    )
     return builder.as_markup()
 
 
@@ -109,3 +76,11 @@ def choose_criterion_kb() -> InlineKeyboardMarkup:
             callback_data=CriterionChoiceCallback(criterion=criterion)
         )
     return builder.as_markup()
+
+
+def numeric_kb(numbers: int) -> ReplyKeyboardMarkup:
+    """Клавиатура для ввода цифр."""
+    builder = ReplyKeyboardBuilder()
+    for number in range(1, numbers + 1):
+        builder.button(text=str(number))
+    return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)

@@ -1,29 +1,19 @@
 from typing import Sequence, Optional, Generic, TypeVar, Union
-from collections.abc import AsyncIterator
 
 import random
 import secrets
 from datetime import datetime, timedelta
 
 from .enums import Role
-from .base import FileStorage, CRUDRepository, Sender, UserRepository
-from .domain import Event, Pilot, Photo, Referral, Judge, File
-from .dto import (
-    CreatedEvent,
-    CreatedPilot,
-    CreatedJudge,
-    EventWithPhoto,
-    PilotWithPhoto,
-    JudgeWithPhoto
-)
+from .base import FileStorage, CRUDRepository
+from .domain import Championship, Stage,  Pilot, Referral, Judge, File, FileMetadata
 from .exceptions import RanOutNumbersError, CodeExpiredError
 
 from ..constants import CODE_LENGTH, DAYS_EXPIRE
+from ..utils import generate_file_name
 
 
-T = TypeVar("T", bound=Union[Event, Pilot, Judge])
-R = TypeVar("R", bound=Union[EventWithPhoto, PilotWithPhoto, JudgeWithPhoto])
-CreatedModel = Union[CreatedEvent, CreatedPilot, CreatedJudge]
+T = TypeVar("T", bound=Union[Championship, Stage, Pilot, Judge])
 
 
 class NumberGenerator:
@@ -41,68 +31,59 @@ class NumberGenerator:
                 return number
 
 
-class CRUDService(Generic[T, R]):
+class CRUDService(Generic[T]):
     def __init__(
             self,
             crud_repository: CRUDRepository[T],
-            file_storage: FileStorage,
-            bucket: str
+            file_storage: FileStorage
     ) -> None:
         self._crud_repository = crud_repository
         self._file_storage = file_storage
-        self._bucket = bucket
 
-    async def create(self, model: T, photo: Optional[Photo]) -> Optional[R]:
-        if photo:
-            await self._file_storage.upload_file(
-                data=photo.data,
-                file_name=photo.file_name,
-                bucket=self._bucket
-            )
-            model.file_name = photo.file_name
-        created_model: CreatedModel = await self._crud_repository.create(model)
-        return await self.read(created_model.id)
+    async def create(
+            self, model: T,
+            files: Optional[list[File]] = None,
+            bucket: Optional[str] = None
+    ) -> T:
+        files_metadata: list[FileMetadata] = []
+        if files:
+            for file in files:
+                key = generate_file_name(file.format)
+                await self._file_storage.upload_file(data=file.data, key=key, bucket=bucket)
+                file_metadata = FileMetadata(
+                    key=key,
+                    bucket=bucket,
+                    size=file.size,
+                    format=file.format,
+                    type=file.type,
+                    uploaded_date=datetime.now()
+                )
+                files_metadata.append(file_metadata)
+        model.files = files_metadata if files_metadata else model
+        created_model = await self._crud_repository.create(model)
+        return created_model
 
-    async def read(self, id: int) -> Optional[R]:
-        model: CreatedModel = await self._crud_repository.read(id)
-        file_name = model.file_name
-        photo: Optional[Photo] = None
-        if file_name:
-            data = await self._file_storage.download_file(
-                file_name=file_name,
-                bucket=self._bucket
-            )
-            photo = Photo(
-                data=data,
-                file_name=file_name,
-                format=file_name.split(".")[-1].lower()
-            )
-        return model.attach_photo(photo)
+    async def read(self, id: int | str) -> tuple[T, Optional[list[File]]]:
+        model = await self._crud_repository.read(id)
+        if not model:
+            return None
+        if not model.files:
+            return model
+        files: list[File] = []
+        for file in model.files:
+            data = await self._file_storage.download_file(key=file.key, bucket=file.bucket)
+            files.append(File(data=data, file_name=file.key))
+        return model, files
 
-    async def delete(self, id: int) -> bool:
-        model: CreatedModel = await self._crud_repository.delete(id)
-        is_deleted = False
-        if model:
-            await self._file_storage.remove_file(file_name=model.file_name, bucket=self._bucket)
-            is_deleted = True
+    async def delete(self, id: int | str) -> bool:
+        model = await self._crud_repository.read(id)
+        if not model:
+            return False
+        is_deleted = await self._crud_repository.delete(id)
+        if model.files:
+            for file in model.files:
+                await self._file_storage.remove_file(key=file.key, bucket=file.bucket)
         return is_deleted
-
-    async def read_all(self) -> AsyncIterator[R]:
-        models: list[CreatedModel] = await self._crud_repository.read_all()
-        for model in models:
-            file_name = model.file_name
-            photo: Optional[Photo] = None
-            if file_name:
-                data = await self._file_storage.download_file(
-                    file_name=file_name,
-                    bucket=self._bucket
-                )
-                photo = Photo(
-                    data=data,
-                    file_name=file_name,
-                    format=file_name.split(".")[-1].lower()
-                )
-            yield model.attach_photo(photo)
 
 
 class ReferralService:
@@ -113,10 +94,10 @@ class ReferralService:
     def generate_code(role: Role) -> str:
         return f"{role.lower()}_{secrets.token_urlsafe(CODE_LENGTH)}"
 
-    async def create_referral(self, event_id: int, admin_id: int, role: Role) -> Referral:
+    async def create_referral(self, stage_id: int, admin_id: int, role: Role) -> Referral:
         code = self.generate_code(role)
         referral = Referral(
-            event_id=event_id,
+            stage_id=stage_id,
             admin_id=admin_id,
             code=code,
             expires_at=datetime.now() + timedelta(days=DAYS_EXPIRE)
@@ -133,39 +114,3 @@ class ReferralService:
             raise CodeExpiredError("Referral code has expired")
         updated_referral = await self._referral_repository.update(referral.code, activated=True)
         return updated_referral
-
-
-class NotificationService:
-    def __init__(self, sender: Sender, user_repository: UserRepository) -> None:
-        self._sender = sender
-        self._user_repository = user_repository
-
-    async def notify(
-            self,
-            user_id: int,
-            message: str,
-            file: Optional[File],
-            **kwargs
-    ) -> None:
-        await self._sender.send(
-            recipient_id=user_id,
-            message=message,
-            file=file,
-            **kwargs
-        )
-
-    async def notify_by_role(
-            self,
-            role: Role,
-            message: str,
-            file: Optional[File],
-            **kwargs
-    ) -> None:
-        users = await self._user_repository.get_by_role(role)
-        for user in users:
-            await self._sender.send(
-                recipient_id=user.user_id,
-                message=message,
-                file=file,
-                **kwargs
-            )

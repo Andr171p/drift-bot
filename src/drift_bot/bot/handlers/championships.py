@@ -1,21 +1,24 @@
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, BufferedInputFile
+from aiogram.types import Message, CallbackQuery
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..utils import get_file
-from ..enums import Confirmation
 from ..states import ChampionshipForm
-from ..keyboards import confirm_kb
-from ..callbacks import ConfirmChampionshipCreationCallback
+from ..enums import Confirmation, AdminChampionshipAction
+from ..keyboards import confirm_kb, admin_championship_actions_kb
+from ..callbacks import ConfirmChampionshipCreationCallback, AdminChampionshipCallback
 
-from ...templates import COMPETITION_TEMPLATE
 from ...decorators import role_required
+from ...templates import COMPETITION_TEMPLATE
+from ...constants import CHAMPIONSHIPS_BUCKET
+
 from ...core.enums import Role
 from ...core.domain import Championship, File
-from ...core.use_cases import ChampionshipCreationUseCase
+from ...core.services import CRUDService
+from ...core.exceptions import CreationError, UploadingFileError, DeletionError, RemovingFileError
 
 
 championships_router = Router(name=__name__)
@@ -82,7 +85,7 @@ async def indicate_stages_count(message: Message, state: FSMContext) -> None:
     ConfirmChampionshipCreationCallback.filter(F.confirmation == Confirmation.NO)
 )
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def cancel_competition_creation(call: CallbackQuery, state: FSMContext) -> None:
+async def cancel_championship_creation(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await call.message.answer("❌ Создание отменено.")
 
@@ -91,10 +94,10 @@ async def cancel_competition_creation(call: CallbackQuery, state: FSMContext) ->
     ConfirmChampionshipCreationCallback.filter(F.confirmation == Confirmation.YES)
 )
 @role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
-async def create_competition(
+async def create_championship(
         call: CallbackQuery,
         state: FSMContext,
-        championship_creation_use_case: Depends[ChampionshipCreationUseCase]
+        championship_service: Depends[CRUDService[Championship]]
 ) -> None:
     data = await state.get_data()
     photo_id, document_id = data.get("photo_id"), data.get("document_id")
@@ -107,4 +110,32 @@ async def create_competition(
         description=data["description"],
         stages_count=data["stages_count"]
     )
-    created_championship = await championship_creation_use_case.execute(championship, files)
+    try:
+        created_championship = await championship_service.create(
+            championship, files, bucket=CHAMPIONSHIPS_BUCKET
+        )
+        await call.message.answer(
+            text="✅ Чемпионат успешно создан...",
+            reply_markup=admin_championship_actions_kb(championship_id=created_championship.id)
+        )
+    except (CreationError, UploadingFileError):
+        await call.message.answer("⚠️ Ошибка при создании чемпионата!")
+
+
+@championships_router.callback_query(
+    AdminChampionshipCallback.filter(F.action == AdminChampionshipAction.DELETE)
+)
+@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+async def delete_championship(
+        call: CallbackQuery,
+        callback_data: AdminChampionshipCallback,
+        championship_service: Depends[CRUDService[Championship]]
+) -> None:
+    try:
+        is_deleted = await championship_service.delete(callback_data.championship_id)
+        if is_deleted:
+            await call.message.answer("✅ Чемпионат успешно удалён...")
+        else:
+            await call.message.answer("❌ Чемпионат не был удалён...")
+    except (DeletionError, RemovingFileError):
+        await call.message.answer("⚠️ Ошибка при удалении чемпионата!")
