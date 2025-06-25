@@ -6,6 +6,7 @@ requires-python = ">=3.13"
 dependencies = [
     "aiobotocore>=2.22.0",
     "aiogram>=3.20.0.post0",
+    "aiogram-datepicker>=0.0.8",
     "aiogram-forms>=1.1.1",
     "alembic>=1.16.1",
     "asyncpg>=0.30.0",

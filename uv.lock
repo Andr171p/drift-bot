@@ -47,6 +47,18 @@ wheels = [
 ]
 
 [[package]]
+name = "aiogram-datepicker"
+version = "0.0.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiogram" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/89/28/d6a212cc02fb81e1ab376f87759416085545a1d7c63170350edb8edcd93d/aiogram_datepicker-0.0.8.tar.gz", hash = "sha256:3e28b688e35652c510915fb15497e31cbb97b0c1557cb113f27dd80ff89c73ec", size = 8720 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/28/97/40a1e481ed5fe79728b694d644a925fcef0d183e932f7df626c680f9a47b/aiogram_datepicker-0.0.8-py3-none-any.whl", hash = "sha256:cc23e1e296be4167aee8f45eea139f1670ff29b188a13e6629cb081cf188c020", size = 11539 },
+]
+
+[[package]]
 name = "aiogram-forms"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -260,6 +272,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiogram" },
+    { name = "aiogram-datepicker" },
     { name = "aiogram-forms" },
     { name = "alembic" },
     { name = "asyncpg" },
@@ -274,6 +287,7 @@ dependencies = [
 requires-dist = [
     { name = "aiobotocore", specifier = ">=2.22.0" },
     { name = "aiogram", specifier = ">=3.20.0.post0" },
+    { name = "aiogram-datepicker", specifier = ">=0.0.8" },
     { name = "aiogram-forms", specifier = ">=1.1.1" },
     { name = "alembic", specifier = ">=1.16.1" },
     { name = "asyncpg", specifier = ">=0.30.0" },

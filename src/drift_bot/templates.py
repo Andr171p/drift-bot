@@ -5,22 +5,22 @@ ADMIN_COMMANDS_TEXT = """<b><u>Доступные команды</u></b>
  * /competitions - получает все соревнования
 """
 
-COMPETITION_TEMPLATE = """<b><u>Информация о соревнованиях</u></b>
+CHAMPIONSHIP_TEMPLATE = """<b><u>Информация о чемпионате 🏆</u></b>
 
 📌 <b>Название:</b> {title}
 📝 <b>Описание:</b> {description}
 🔢 <b>Количество этапов</b>: {stages_count}
 
-#competition #drift
+#championship #drift
 """
 
-SUBMIT_EVENT_CREATION_TEMPLATE = """📌 <b>Название:</b> {title}
+STAGE_TEMPLATE = """📌 <b>Название:</b> {title}
 📝 <b>Описание:</b> {description}
 📍 <b>Место:</b> {location}
 🗺️ <b>Как добраться:</b> {map_link}
 🗓 <b>Дата:</b> {date}
 
-#event #drift
+#stage #drift
 """
 
 SUBMIT_JUDGE_REGISTRATION_TEMPLATE = """<b><u>Информация о судье<u></b>

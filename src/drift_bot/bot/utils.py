@@ -1,20 +1,56 @@
-from typing import Any, Callable, Coroutine, TypeVar
-from typing_extensions import ParamSpec
-from functools import wraps
+from datetime import datetime
 
-from aiogram import Bot
-from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import CallbackQuery, Message
+
+from aiogram_datepicker import DatepickerSettings
 
 from ..core.domain import File
 
-
 WIDTH = 10  # Ширина прогресс бара
 
-P = ParamSpec("P")                                    # Параметры оригинальной функции
-R = TypeVar("R")                                      # Возвращаемый тип оригинальной функции
-MessageHandler = Callable[P, Coroutine[Any, Any, R]]  # Обработчик сообщения пользователя
+
+def get_datepicker_settings() -> DatepickerSettings:
+    return DatepickerSettings(
+        initial_view="day",
+        initial_date=datetime.now().date(),
+        views={
+            "day": {
+                "show_weekdays": True,
+                "weekdays_labels": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+                "header": ["prev-year", "days-title", "next-year"],
+                "footer": ["prev-month", "select", "next-month"],
+            },
+            "month": {
+                "months_labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                "header": [
+                    "prev-year",
+                    ["year", "select"],
+                    "next-year"
+                ],
+                "footer": ["select"],
+            },
+            "year": {
+                "header": [],
+                "footer": ["prev-years", "next-years"],
+            }
+        },
+        labels={
+            "prev-year": "<<",
+            "next-year": ">>",
+            "prev-years": "<<",
+            "next-years": ">>",
+            "days-title": "{month} {year}",
+            "selected-day": "{day} *",
+            "selected-month": "{month} *",
+            "present-day": "• {day} •",
+            "prev-month": "<",
+            "select": "Select",
+            "next-month": ">",
+            "ignore": ""
+        },
+        custom_actions=[]
+    )
 
 
 async def get_file(file_id: str, call: CallbackQuery) -> File:
@@ -32,41 +68,3 @@ def draw_progress_bar(filled: int, total: int, width: int = WIDTH) -> str:
 
 def get_form_fields(form: StatesGroup) -> list[str]:
     return [attr for attr in dir(form) if isinstance(getattr(form, attr), State)]
-
-
-def show_progress_bar(
-        form: StatesGroup,
-        width: int = WIDTH
-) -> Callable[[MessageHandler[P, R]], MessageHandler[P, R] | None]:
-    """
-        Декоратор для отображения прогресс-бара в FSM
-
-        :param form: FSM форма для заполнения данных
-        :param width: Ширина прогресс-бара в символах
-        """
-
-    def decorator(handler: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
-        @wraps(handler)
-        async def wrapper(
-                update: Message | CallbackQuery,
-                state: FSMContext,
-                bot: Bot,
-                *args,
-                **kwargs
-        ) -> R | None:
-            steps = get_form_fields(form)
-            data = await state.get_data()
-            completed_steps = sum(1 for step in steps if step in data)
-            progress_bar = draw_progress_bar(completed_steps, len(steps), width=width)
-            progress_percent = round(completed_steps / len(steps) * 100, 2)
-            result = await handler(update, state, bot, *args, **kwargs)
-            text = f"""Заполнено:
-            {progress_bar} {progress_percent}%
-            """
-            if isinstance(update, Message):
-                await update.answer(text)
-            elif isinstance(update, CallbackQuery):
-                await update.message.answer(text)
-            return result
-        return wrapper
-    return decorator

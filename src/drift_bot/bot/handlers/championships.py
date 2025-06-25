@@ -7,12 +7,12 @@ from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..utils import get_file
 from ..states import ChampionshipForm
+from ..decorators import role_required
 from ..enums import Confirmation, AdminChampionshipAction
 from ..keyboards import confirm_kb, admin_championship_actions_kb
 from ..callbacks import ConfirmChampionshipCreationCallback, AdminChampionshipCallback
 
-from ...decorators import role_required
-from ...templates import COMPETITION_TEMPLATE
+from ...templates import CHAMPIONSHIP_TEMPLATE
 from ...constants import CHAMPIONSHIPS_BUCKET
 
 from ...core.enums import Role
@@ -72,7 +72,7 @@ async def indicate_stages_count(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     await message.answer_photo(
         photo=data["photo_id"],
-        caption=COMPETITION_TEMPLATE.format(
+        caption=CHAMPIONSHIP_TEMPLATE.format(
             title=data["title"],
             description=data["description"],
             stages_count=data["stages_count"]

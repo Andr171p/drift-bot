@@ -9,4 +9,10 @@ class Confirmation(StrEnum):
 class AdminChampionshipAction(StrEnum):
     EDIT = "edit"
     DELETE = "delete"
-    ADD_STAGE = "add_stage"
+    ADD_STAGE = "add_stage"  # Добавить этап
+
+
+class AdminStageAction(StrEnum):
+    DELETE = "delete"
+    TOGGLE_REGISTRATION = "toggle_registration"
+    INVITE_JUDGE = "invite_judge"

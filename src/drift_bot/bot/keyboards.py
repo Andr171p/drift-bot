@@ -1,12 +1,13 @@
 from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
-from .enums import Confirmation, AdminChampionshipAction
+from .enums import Confirmation, AdminChampionshipAction, AdminStageAction
 from .callbacks import (
     StartCallback,
     ConfirmCallback,
     CriterionChoiceCallback,
-    AdminChampionshipCallback
+    AdminChampionshipCallback,
+    AdminStageCallback
 )
 
 from ..core.enums import Role, Criterion
@@ -62,6 +63,34 @@ def admin_championship_actions_kb(championship_id: int) -> InlineKeyboardMarkup:
             championship_id=championship_id,
             action=AdminChampionshipAction.ADD_STAGE
         ).pack()
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def admin_stage_actions_kb(stage_id: int, is_active: bool) -> InlineKeyboardMarkup:
+    """Клавиатура для взаимодействия с этапом чемпионата."""
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="🗑️ Удалить",
+        callback_data=AdminStageCallback(
+            stage_id=stage_id,
+            action=AdminStageAction.DELETE
+        ).pack()
+    )
+    builder.button(
+        text="🔓 Открыть регистрацию" if is_active else "🔐 Закрыть регистрацию",
+        callback_data=AdminStageCallback(
+            stage_id=stage_id,
+            action=AdminStageAction.TOGGLE_REGISTRATION
+        ).pack()
+    )
+    builder.button(
+        text="📨 Пригласить судью",
+        callback_data=AdminStageCallback(
+            stage_id=stage_id,
+            action=AdminStageAction.INVITE_JUDGE
+        )
     )
     builder.adjust(1)
     return builder.as_markup()

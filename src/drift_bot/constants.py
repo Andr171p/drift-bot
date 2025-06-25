@@ -20,6 +20,7 @@ REFERRAL_LIFE_TIME = 3  # Дней
 
 # S3 бакеты для хранения файловых объектов
 CHAMPIONSHIPS_BUCKET = "competitions"
+STAGES_BUCKET = "stages"
 PILOTS_BUCKET = "pilots"
 JUDGES_BUCKET = "judges"
 
