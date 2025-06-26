@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 
 from datetime import datetime
 
@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field
 from .enums import Role, Criterion, CarType, FileType
 
 from ..constants import (
+    BOT_URL,
     ATTEMPT,
     MAX_TITLE_LENGTH,
     MIN_STAGES_COUNT,
@@ -76,6 +77,10 @@ class Referral(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @property
+    def link(self) -> str:
+        return f"{BOT_URL}?start={self.code}"
+
 
 class Championship(BaseModel):
     id: Optional[int] = None                                 # ID (генерируется при создании)
@@ -138,13 +143,27 @@ class Qualification(BaseModel):
     stage_id: int      # ID этапа
     pilot_number: int  # Номер пилота
     attempt: ATTEMPT   # Попытка
-    score: float       # Количество баллов
+    points: float      # Количество баллов
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ScoringJudge(BaseModel):
+    stage_id: int         # Текущий этап
     judge_id: int         # ID судьи
-    number: int           # Номер пилота
+    pilot_number: int     # Номер пилота
     criterion: Criterion  # Критерий за который ставится оценка
-    score: float          # Баллы за критерий
+    points: float         # Баллы за критерий
+
+
+class Heat(BaseModel):
+    stage_id: int
+    first_pilot_number: int
+    second_pilot_number: int
+
+
+class VotingJudge(BaseModel):
+    stage_id: int
+    judge_id: int
+    heat: Heat
+    decision: int | Literal["OMT"]

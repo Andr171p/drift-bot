@@ -7,7 +7,6 @@ from .enums import Role
 from .domain import User, Judge, Pilot, File, Stage, Championship
 from .dto import ActiveChampionship
 
-
 T = TypeVar("T")
 
 

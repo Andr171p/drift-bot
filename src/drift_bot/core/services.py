@@ -94,7 +94,7 @@ class ReferralService:
     def generate_code(role: Role) -> str:
         return f"{role.lower()}_{secrets.token_urlsafe(CODE_LENGTH)}"
 
-    async def create_referral(self, stage_id: int, admin_id: int, role: Role) -> Referral:
+    async def invite(self, stage_id: int, admin_id: int, role: Role) -> Referral:
         code = self.generate_code(role)
         referral = Referral(
             stage_id=stage_id,
@@ -105,7 +105,7 @@ class ReferralService:
         created_referral = await self._referral_repository.create(referral)
         return created_referral
 
-    async def get_referral(self, code: str) -> Optional[Referral]:
+    async def login(self, code: str) -> Optional[Referral]:
         now_time = datetime.now()
         referral = await self._referral_repository.read(code)
         if not referral:

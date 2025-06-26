@@ -9,14 +9,14 @@ from dishka.integrations.aiogram import FromDishka as Depends
 from ..states import StageForm
 from ..utils import get_file, get_datepicker_settings
 from ..decorators import role_required, show_progress_bar
-from ..enums import AdminChampionshipAction, Confirmation
 from ..keyboards import numeric_kb, confirm_kb, admin_stage_actions_kb
-from ..callbacks import AdminChampionshipCallback, ConfirmStageCreationCallback
+from ..enums import AdminChampionshipAction, Confirmation, AdminStageAction
+from ..callbacks import AdminChampionshipCallback, ConfirmStageCreationCallback, AdminStageCallback
 
 from ...core.enums import Role
 from ...core.base import CRUDRepository
-from ...core.services import CRUDService
 from ...core.domain import Championship, Stage
+from ...core.services import CRUDService, ReferralService
 from ...core.exceptions import CreationError, UploadingFileError
 
 from ...templates import STAGE_TEMPLATE
@@ -172,3 +172,21 @@ async def create_stage(
         )
     except (CreationError, UploadingFileError):
         await call.message.answer("⚠️ Ошибка при добавлении этапа!")
+
+
+@stages_router.callback_query(AdminStageCallback.filter(F.action == AdminStageAction.INVITE_JUDGE))
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+async def invite_judge_to_stage(
+        call: CallbackQuery,
+        callback_data: AdminStageCallback,
+        referral_service: Depends[ReferralService]
+) -> None:
+    try:
+        referral = await referral_service.invite(
+            stage_id=callback_data.stage_id,
+            admin_id=call.message.from_user.id,
+            role=Role.JUDGE
+        )
+        await call.message.answer(f"🔗 Ваша реферальная ссылка: {referral.link}")
+    except CreationError:
+        await call.message.answer("⚠️ Ошибка при создании ссылки!")
