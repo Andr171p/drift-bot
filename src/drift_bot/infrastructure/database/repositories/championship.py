@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,12 @@ from ..utils import create_files
 from src.drift_bot.core.dto import ActiveChampionship
 from src.drift_bot.core.domain import Championship
 from src.drift_bot.core.base import ChampionshipRepository
-from src.drift_bot.core.exceptions import CreationError, ReadingError, DeletionError
+from src.drift_bot.core.exceptions import (
+    CreationError,
+    ReadingError,
+    UpdateError,
+    DeletionError
+)
 
 
 class SQLChampionshipRepository(ChampionshipRepository):
@@ -49,6 +54,23 @@ class SQLChampionshipRepository(ChampionshipRepository):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading championship: {e}") from e
+
+    async def update(self, id: int, **kwargs) -> Optional[Championship]:
+        try:
+            stmt = (
+                update(ChampionshipOrm)
+                .values(**kwargs)
+                .where(ChampionshipOrm.id == id)
+                .options(selectinload(ChampionshipOrm.files))
+                .returning(ChampionshipOrm)
+            )
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            championship_orm = result.scalar_one_or_none()
+            return Championship.model_validate(championship_orm) if championship_orm else None
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise UpdateError(f"Error while updating championship: {e}") from e
 
     async def delete(self, id: int) -> bool:
         try:

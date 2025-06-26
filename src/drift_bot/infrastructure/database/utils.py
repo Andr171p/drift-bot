@@ -2,7 +2,6 @@ from typing import Protocol, TypeVar, Optional
 
 from uuid import UUID
 
-from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import FileMetadataOrm

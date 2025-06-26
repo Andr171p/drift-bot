@@ -18,21 +18,24 @@ from ...constants import CHAMPIONSHIPS_BUCKET
 from ...core.enums import Role
 from ...core.domain import Championship, File
 from ...core.services import CRUDService
+from ...core.base import ChampionshipRepository
 from ...core.exceptions import CreationError, UploadingFileError, DeletionError, RemovingFileError
 
 
 championships_router = Router(name=__name__)
 
+ADMIN_REQUIRED_MESSAGE = "⛔ Создавать чемпионаты может только администратор!"
+
 
 @championships_router.message(Command("/create_championship"))
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def send_championship_form(message: Message, state: FSMContext) -> None:
     await state.set_state(ChampionshipForm.title)
     await message.answer("Укажите название соревнования: ")
 
 
 @championships_router.message(ChampionshipForm.title)
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def enter_championship_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text)
     await state.set_state(ChampionshipForm.description)
@@ -40,7 +43,7 @@ async def enter_championship_title(message: Message, state: FSMContext) -> None:
 
 
 @championships_router.message(ChampionshipForm.description)
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def enter_championship_description(message: Message, state: FSMContext) -> None:
     await state.update_data(description=message.text)
     await state.set_state(ChampionshipForm.photo_id)
@@ -48,7 +51,7 @@ async def enter_championship_description(message: Message, state: FSMContext) ->
 
 
 @championships_router.message(ChampionshipForm.photo_id, F.photo)
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def attach_championship_photo(message: Message, state: FSMContext) -> None:
     if message.text != "/skip":
         await state.update_data(photo_id=message.photo[-1].file_id)
@@ -57,7 +60,7 @@ async def attach_championship_photo(message: Message, state: FSMContext) -> None
 
 
 @championships_router.message(ChampionshipForm.document_id, F.document)
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def attach_championship_regulation(message: Message, state: FSMContext) -> None:
     if message.text != "/skip":
         await state.update_data(docuement_id=message.document.file_id)
@@ -66,7 +69,7 @@ async def attach_championship_regulation(message: Message, state: FSMContext) ->
 
 
 @championships_router.message(ChampionshipForm.stages_count)
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def indicate_stages_count(message: Message, state: FSMContext) -> None:
     await state.update_data(stages_count=int(message.text))
     data = await state.get_data()
@@ -84,7 +87,7 @@ async def indicate_stages_count(message: Message, state: FSMContext) -> None:
 @championships_router.callback_query(
     ConfirmChampionshipCreationCallback.filter(F.confirmation == Confirmation.NO)
 )
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def cancel_championship_creation(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await call.message.answer("❌ Создание отменено.")
@@ -93,7 +96,7 @@ async def cancel_championship_creation(call: CallbackQuery, state: FSMContext) -
 @championships_router.callback_query(
     ConfirmChampionshipCreationCallback.filter(F.confirmation == Confirmation.YES)
 )
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def create_championship(
         call: CallbackQuery,
         state: FSMContext,
@@ -125,7 +128,7 @@ async def create_championship(
 @championships_router.callback_query(
     AdminChampionshipCallback.filter(F.action == AdminChampionshipAction.DELETE)
 )
-@role_required(Role.ADMIN, error_message="🛑 У вас нет доступа к этому функционалу!")
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def delete_championship(
         call: CallbackQuery,
         callback_data: AdminChampionshipCallback,
@@ -139,3 +142,18 @@ async def delete_championship(
             await call.message.answer("❌ Чемпионат не был удалён...")
     except (DeletionError, RemovingFileError):
         await call.message.answer("⚠️ Ошибка при удалении чемпионата!")
+
+
+@championships_router.callback_query(
+    AdminChampionshipCallback.filter(F.action == AdminChampionshipAction.TOGGLE_ACTIVATION)
+)
+@role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+async def toggle_championship_activation(
+        call: CallbackQuery,
+        callback_data: AdminChampionshipCallback,
+        championship_repository: Depends[ChampionshipRepository]
+) -> None:
+    championship_id = callback_data.championship_id
+    championship = await championship_repository.read(championship_id)
+    is_active = True if not championship.is_active else False
+    await championship.update(championship_id, is_active=is_active)

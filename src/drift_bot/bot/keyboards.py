@@ -48,7 +48,7 @@ def confirm_kb(callback: type[ConfirmCallback]) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def admin_championship_actions_kb(championship_id: int) -> InlineKeyboardMarkup:
+def admin_championship_actions_kb(championship_id: int, is_active: bool) -> InlineKeyboardMarkup:
     """Клавиатура администратора для взаимодействия с чемпионатом."""
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -64,6 +64,13 @@ def admin_championship_actions_kb(championship_id: int) -> InlineKeyboardMarkup:
             championship_id=championship_id,
             action=AdminChampionshipAction.ADD_STAGE
         ).pack()
+    )
+    builder.button(
+        text="🟢 Сделать активным" if is_active else "🔴 Закрыть",
+        callback_data=AdminChampionshipCallback(
+            championship_id=championship_id,
+            action=AdminChampionshipAction.TOGGLE_ACTIVATION
+        )
     )
     builder.adjust(1)
     return builder.as_markup()
