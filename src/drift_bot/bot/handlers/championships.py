@@ -113,9 +113,12 @@ async def create_championship(
     photo_id, document_id = data.get("photo_id"), data.get("document_id")
     files: list[File] = []
     for file_id in (photo_id, document_id):
-        file = await get_file(file_id, call)
-        files.append(file)
+        print(file_id)
+        if file_id is not None:
+            file = await get_file(file_id, call)
+            files.append(file)
     championship = Championship(
+        user_id=call.message.from_user.id,
         title=data["title"],
         description=data["description"],
         stages_count=data["stages_count"]
@@ -131,8 +134,9 @@ async def create_championship(
                 is_active=created_championship.is_active
             )
         )
-    except (CreationError, UploadingFileError):
+    except (CreationError, UploadingFileError) as e:
         await call.message.answer("⚠️ Ошибка при создании чемпионата!")
+        raise e
 
 
 @championships_router.callback_query(

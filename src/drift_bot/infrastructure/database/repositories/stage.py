@@ -33,7 +33,12 @@ class SQLStageRepository(StageRepository):
             )
             self.session.add(stage_orm)
             await self.session.flush()
-            await create_files(self.session, stage, parent_type="stage")
+            await create_files(
+                self.session,
+                stage.files,
+                parent_id=stage_orm.id,
+                parent_type="stage"
+            )
             await self.session.commit()
             await self.session.refresh(stage_orm)
             return Stage.model_dump(stage_orm)

@@ -33,9 +33,21 @@ class SQLChampionshipRepository(ChampionshipRepository):
             )
             self.session.add(championship_orm)
             await self.session.flush()
-            await create_files(self.session, championship, parent_type="championship")
+            await create_files(
+                self.session,
+                championship.files,
+                parent_id=championship_orm.id,
+                parent_type="championship"
+            )
             await self.session.commit()
             await self.session.refresh(championship_orm)
+            stmt = (
+                select(ChampionshipOrm)
+                .where(ChampionshipOrm.id == championship_orm.id)
+                .options(selectinload(ChampionshipOrm.files))
+            )
+            result = await self.session.execute(stmt)
+            championship_orm = result.scalar_one()
             return Championship.model_validate(championship_orm)
         except SQLAlchemyError as e:
             await self.session.rollback()

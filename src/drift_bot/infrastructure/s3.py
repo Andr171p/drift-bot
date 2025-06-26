@@ -54,11 +54,11 @@ class S3Client(FileStorage):
     async def upload_file(
             self,
             data: bytes,
-            file_name: str,
+            key: str,
             bucket: str,
             metadata: Optional[dict[str, Any]] = None
     ) -> None:
-        kwargs = {"Bucket": bucket, "Key": file_name, "Body": data}
+        kwargs = {"Bucket": bucket, "Key": key, "Body": data}
         if metadata is not None:
             kwargs["ExtraArgs"] = metadata
         try:
@@ -67,21 +67,21 @@ class S3Client(FileStorage):
         except Exception as e:
             raise UploadingFileError(f"Error while uploading file: {e}") from e
 
-    async def download_file(self, file_name: str, bucket: str) -> bytes:
+    async def download_file(self, key: str, bucket: str) -> bytes:
         try:
             async with self._get_client() as client:
-                response = await client.get_object(Bucket=bucket, Key=file_name)
+                response = await client.get_object(Bucket=bucket, Key=key)
                 body = response["Body"]
                 return await body.read()
         except Exception as e:
             self.logger.error(f"Error while receiving file: {e}")
             raise DownloadingFileError(f"Error while receiving file: {e}") from e
 
-    async def remove_file(self, file_name: str, bucket: str) -> str:
+    async def remove_file(self, key: str, bucket: str) -> str:
         try:
             async with self._get_client() as client:
-                await client.delete_object(Bucket=bucket, Key=file_name)
-            return file_name
+                await client.delete_object(Bucket=bucket, Key=key)
+            return key
         except Exception as e:
             self.logger.error(f"Error while deleting file: {e}")
             raise RemovingFileError(f"Error while deleting file: {e}") from e

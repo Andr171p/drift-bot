@@ -4,7 +4,6 @@ from functools import wraps
 
 import logging
 
-from aiogram import Bot
 from aiogram.fsm.state import StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -40,11 +39,11 @@ def role_required(
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
             async with container(scope=Scope.REQUEST) as request_container:
                 user_repository = await request_container.get(CRUDRepository[User])
-            user_id = message.from_user.id
-            user = await user_repository.read(user_id)
-            if user.role != role:
-                logger.warning(f"Required role: {role}")
-                await message.answer(error_message)
+                user_id = message.from_user.id
+                user = await user_repository.read(user_id)
+                if user.role != role:
+                    logger.warning(f"Required role: {role}")
+                    await message.answer(error_message)
             return await func(message, *args, **kwargs)
         return wrapper
     return decorator
@@ -57,16 +56,16 @@ def save_user(role: Role) -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
             async with container(scope=Scope.REQUEST) as request_container:
                 user_repository = await request_container.get(CRUDRepository[User])
-            user = User(
-                user_id=message.from_user.id,
-                username=message.from_user.username,
-                role=role
-            )
-            try:
-                _ = await user_repository.create(user)
-            except CreationError as e:
-                logger.error(f"Error while user saving: {e}")
-                await message.answer("⚠️ Произошла ошибка, попробуйте позже. Приносим свои извинения.")
+                user = User(
+                    user_id=message.from_user.id,
+                    username=message.from_user.username,
+                    role=role
+                )
+                try:
+                    _ = await user_repository.create(user)
+                except CreationError as e:
+                    logger.error(f"Error while user saving: {e}")
+                    await message.answer("⚠️ Произошла ошибка, попробуйте позже. Приносим свои извинения.")
             return await func(message, *args, **kwargs)
         return wrapper
     return decorator
@@ -110,28 +109,28 @@ def handle_invited_user() -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
             async with container(scope=Scope.REQUEST) as request_container:
                 referral_service = await request_container.get(ReferralService)
-            url = message.get_url()
-            if not url:
-                return await handler(message, *args, **kwargs)
-            code = parse_referral_code(url)
-            if not code:
-                return await handler(message, *args, **kwargs)
-            try:
-                referral = await referral_service.login(code)
-                role = parse_role_from_code(code)
+                url = message.get_url()
+                if not url:
+                    return await handler(message, *args, **kwargs)
+                code = parse_referral_code(url)
+                if not code:
+                    return await handler(message, *args, **kwargs)
+                try:
+                    referral = await referral_service.login(code)
+                    role = parse_role_from_code(code)
 
-                @save_user(role)
-                async def wrapped_handler(msg: Message, *a, **kw) -> R:
-                    await msg.answer(
-                        text="Вам необходимо пройти регистрацию на этап...",
-                        reply_markup=judge_registration_kb(stage_id=referral.stage_id)
-                    )
-                    return handler(msg, *a, **kw)
+                    @save_user(role)
+                    async def wrapped_handler(msg: Message, *a, **kw) -> R:
+                        await msg.answer(
+                            text="Вам необходимо пройти регистрацию на этап...",
+                            reply_markup=judge_registration_kb(stage_id=referral.stage_id)
+                        )
+                        return handler(msg, *a, **kw)
 
-                return wrapped_handler(message, *args, **kwargs)
-            except CodeExpiredError as e:
-                logger.error(f"Error while login user: {e}")
-                await message.answer("⚠️ Ваша реферальная ссылка истекла!")
-                return None
+                    return wrapped_handler(message, *args, **kwargs)
+                except CodeExpiredError as e:
+                    logger.error(f"Error while login user: {e}")
+                    await message.answer("⚠️ Ваша реферальная ссылка истекла!")
+                    return None
         return wrapper
     return decorator

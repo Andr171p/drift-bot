@@ -20,10 +20,12 @@ class FileMetadata(BaseModel):
     id: Optional[int] = None  # ID файла
     key: str                  # Ссылка на S3
     bucket: str               # Имя бакета в S3
-    size: int                 # Размер в МБ
+    size: float               # Размер в МБ
     format: str               # Формат файла / расширение
     type: FileType            # Тип файла
     uploaded_date: datetime   # Дата загрузки
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class File(BaseModel):
@@ -86,6 +88,7 @@ class Referral(BaseModel):
 
 class Championship(BaseModel):
     id: Optional[int] = None                                 # ID (генерируется при создании)
+    user_id: int                                             # ID пользователя, который создал чемпионат
     title: str = Field(..., max_length=MAX_TITLE_LENGTH)     # Название / заголовок
     description: Optional[str] = None                        # Описание
     files: list[FileMetadata] = Field(default_factory=list)  # Прикреплённые файлы (фото, регламент ...)
