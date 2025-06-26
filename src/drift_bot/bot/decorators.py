@@ -9,6 +9,8 @@ from aiogram.fsm.state import StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from dishka import Scope
+
 from .keyboards import judge_registration_kb
 from .utils import get_form_fields, draw_progress_bar, WIDTH
 
@@ -36,13 +38,14 @@ def role_required(
     def decorator(func: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         @wraps(func)
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
-            user_repository = await container.get(CRUDRepository[User])
+            async with container(scope=Scope.REQUEST) as request_container:
+                user_repository = await request_container.get(CRUDRepository[User])
             user_id = message.from_user.id
             user = await user_repository.read(user_id)
             if user.role != role:
                 logger.warning(f"Required role: {role}")
                 await message.answer(error_message)
-            return func(message, *args, **kwargs)
+            return await func(message, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -52,7 +55,8 @@ def save_user(role: Role) -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
     def decorator(func: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         @wraps(func)
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
-            user_repository = await container.get(CRUDRepository[User])
+            async with container(scope=Scope.REQUEST) as request_container:
+                user_repository = await request_container.get(CRUDRepository[User])
             user = User(
                 user_id=message.from_user.id,
                 username=message.from_user.username,
@@ -63,7 +67,7 @@ def save_user(role: Role) -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
             except CreationError as e:
                 logger.error(f"Error while user saving: {e}")
                 await message.answer("⚠️ Произошла ошибка, попробуйте позже. Приносим свои извинения.")
-            return func(message, *args, **kwargs)
+            return await func(message, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -80,19 +84,13 @@ def show_progress_bar(
         """
     def decorator(handler: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         @wraps(handler)
-        async def wrapper(
-                update: Message | CallbackQuery,
-                state: FSMContext,
-                bot: Bot,
-                *args,
-                **kwargs
-        ) -> R | None:
+        async def wrapper(update: Message | CallbackQuery, state: FSMContext, *args,  **kwargs) -> R | None:
             steps = get_form_fields(form)
             data = await state.get_data()
             completed_steps = sum(1 for step in steps if step in data)
             progress_bar = draw_progress_bar(completed_steps, len(steps), width=width)
             progress_percent = round(completed_steps / len(steps) * 100, 2)
-            result = await handler(update, state, bot, *args, **kwargs)
+            result = await handler(update, state, *args, **kwargs)
             text = f"""Заполнено:
             {progress_bar} {progress_percent}%
             """
@@ -110,8 +108,11 @@ def handle_invited_user() -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
     def decorator(handler: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         @wraps(handler)
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
-            referral_service = await container.get(ReferralService)
+            async with container(scope=Scope.REQUEST) as request_container:
+                referral_service = await request_container.get(ReferralService)
             url = message.get_url()
+            if not url:
+                return await handler(message, *args, **kwargs)
             code = parse_referral_code(url)
             if not code:
                 return await handler(message, *args, **kwargs)

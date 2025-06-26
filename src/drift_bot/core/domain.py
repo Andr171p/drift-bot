@@ -67,6 +67,8 @@ class User(BaseModel):
     username: Optional[str]
     role: Role
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class Referral(BaseModel):
     stage_id: int            # ID этапа

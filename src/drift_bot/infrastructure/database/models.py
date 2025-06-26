@@ -38,8 +38,6 @@ class ReferralOrm(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     activated: Mapped[bool]
 
-    stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="referrals")
-
 
 class FileMetadataOrm(Base):
     __tablename__ = "file_metadata"
@@ -106,10 +104,7 @@ class StageOrm(Base):
         back_populates="stage",
         cascade="all, delete-orphan"
     )
-    championship: Mapped["ChampionshipOrm"] = relationship(
-        argument="StageOrm",
-        back_populates="stages"
-    )
+    championship: Mapped["ChampionshipOrm"] = relationship(back_populates="stages")
 
 
 class JudgeOrm(Base):
@@ -126,7 +121,7 @@ class JudgeOrm(Base):
         cascade="all, delete-orphan"
     )
 
-    stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="judges")
+    stage: Mapped["StageOrm"] = relationship(back_populates="judges")
 
     __table_args__ = (
         CheckConstraint("criterion IN ('STYLE', 'ANGLE', 'LINE')", "check_criterion"),
@@ -141,7 +136,7 @@ class CarOrm(Base):
     plate: Mapped[str | None] = mapped_column(nullable=True)
     hp: Mapped[int]
 
-    pilot: Mapped["PilotOrm"] = relationship(argument="PilotOrm", back_populates="cars")
+    pilot: Mapped["PilotOrm"] = relationship(back_populates="cars")
 
 
 class PilotOrm(Base):
@@ -161,7 +156,7 @@ class PilotOrm(Base):
         cascade="all, delete-orphan"
     )
 
-    stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="pilots")
+    stage: Mapped["StageOrm"] = relationship(back_populates="pilots")
     qualifications: Mapped[list["QualificationOrm"]] = relationship(back_populates="pilot")
 
 
@@ -175,7 +170,7 @@ class QualificationOrm(Base):
     line_points: Mapped[float]
     total_points: Mapped[float]
 
-    pilot: Mapped["PilotOrm"] = relationship(argument="PilotOrm", back_populates="qualifications")
+    pilot: Mapped["PilotOrm"] = relationship(back_populates="qualifications")
 
     __table_args__ = (
         CheckConstraint("attempt = 1 OR attempt = 2", "check_attempt_count"),

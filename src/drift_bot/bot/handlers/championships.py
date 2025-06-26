@@ -27,7 +27,7 @@ championships_router = Router(name=__name__)
 ADMIN_REQUIRED_MESSAGE = "⛔ Создавать чемпионаты может только администратор!"
 
 
-@championships_router.message(Command("/create_championship"))
+@championships_router.message(Command("create_championship"))
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 @show_progress_bar(ChampionshipForm)
 async def send_championship_form(message: Message, state: FSMContext) -> None:
