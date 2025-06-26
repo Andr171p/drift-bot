@@ -103,6 +103,9 @@ class Stage(BaseModel):
     date: datetime                                                     # Дата начала
     is_active: bool = False                                            # Активен ли этап
 
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 

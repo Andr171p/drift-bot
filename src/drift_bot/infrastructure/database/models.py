@@ -65,9 +65,9 @@ class ChampionshipOrm(Base):
     stages_count: Mapped[int]
 
     files: Mapped[list["FileMetadataOrm"]] = relationship(
-        primaryjoin="""and_(ChampionshipOrm.id == foreign(FileMetadataOrm.parent_id), 
-        FileMetadataOrm.parent_type == 'championship')""",
-        viewonly=True
+        primaryjoin="and_(ChampionshipOrm.id == foreign(FileMetadataOrm.parent_id), " \ 
+                    "FileMetadataOrm.parent_type == 'championship')",
+        cascade="all, delete-orphan"
     )
 
     stages: Mapped[list["StageOrm"]] = relationship(
@@ -91,6 +91,12 @@ class StageOrm(Base):
     map_link: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime)
     is_active: Mapped[bool]
+
+    files: Mapped[list["FileMetadataOrm"]] = relationship(
+        primaryjoin="and_(StageOrm.id == foreign(FileMetadataOrm.parent_id), " \ 
+                    "FileMetadataOrm.parent_type == 'stage')",
+        cascade="all, delete-orphan"
+    )
 
     judges: Mapped[list["JudgesOrm"]] = relationship(
         back_populates="stage",

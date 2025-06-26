@@ -8,7 +8,7 @@ from ..models import ReferralOrm
 
 from src.drift_bot.core.domain import Referral
 from src.drift_bot.core.base import CRUDRepository
-from src.drift_bot.core.exceptions import CreationError, ReadingError, DeletingError
+from src.drift_bot.core.exceptions import CreationError, ReadingError, DeletionError
 
 
 class SQLReferralRepository(CRUDRepository[Referral]):
@@ -43,9 +43,6 @@ class SQLReferralRepository(CRUDRepository[Referral]):
             await self.session.rollback()
             raise ReadingError(f"Error while reading referral: {e}")
 
-    async def update(self, code: str, **kwargs) -> Optional[Referral]:
-        raise NotImplementedError
-
     async def delete(self, code: str) -> bool:
         try:
             stmt = (
@@ -57,4 +54,4 @@ class SQLReferralRepository(CRUDRepository[Referral]):
             return result.rowcount > 0
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DeletingError(f"Error while deleting referral: {e}")
+            raise DeletionError(f"Error while deleting referral: {e}")

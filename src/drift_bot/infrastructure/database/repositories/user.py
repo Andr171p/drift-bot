@@ -11,8 +11,8 @@ from src.drift_bot.core.base import CRUDRepository
 from src.drift_bot.core.exceptions import (
     CreationError,
     ReadingError,
-    UpdatingError,
-    DeletingError
+    UpdateError,
+    DeletionError
 )
 
 
@@ -62,7 +62,7 @@ class SQLUserRepository(CRUDRepository[User]):
             return User.model_validate(user) if user else None
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise UpdatingError(f"Error while updating user: {e}") from e
+            raise UpdateError(f"Error while updating user: {e}") from e
 
     async def delete(self, user_id: int) -> bool:
         try:
@@ -75,4 +75,4 @@ class SQLUserRepository(CRUDRepository[User]):
             return result.rowcount > 0
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DeletingError(f"Error while deleting user: {e}") from e
+            raise DeletionError(f"Error while deleting user: {e}") from e
