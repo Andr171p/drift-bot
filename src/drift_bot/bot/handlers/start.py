@@ -24,8 +24,9 @@ async def start(message: Message) -> None:
 @save_user(Role.ADMIN)
 async def handle_admin(call: CallbackQuery) -> None:
     await call.message.answer("""<b><u>Доступные команды</u></b>
-     * /create_competition - создаёт соревнование
-     * /competitions - получает все соревнования
+    
+     * /create_championship - создаёт соревнование
+     * /championship - получает все соревнования
     """)
 
 
@@ -33,7 +34,10 @@ async def handle_admin(call: CallbackQuery) -> None:
 @save_user(Role.JUDGE)
 async def handle_judge(call: CallbackQuery) -> None:
     await call.message.answer("""<b><u>Доступные команды</u></b>
-     * /active_competitions - получает все активные соревнования.
+    
+     * /active_championships - получить все активные чемпионаты.
+     * /give_points - выставить баллы за квалификацию.
+     * /vote - проголосовать за пилота (для парных заездов)
     """)
 
 

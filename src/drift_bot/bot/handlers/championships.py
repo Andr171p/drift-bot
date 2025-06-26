@@ -109,6 +109,7 @@ async def create_championship(
         championship_service: Depends[CRUDService[Championship]]
 ) -> None:
     data = await state.get_data()
+    await state.clear()
     photo_id, document_id = data.get("photo_id"), data.get("document_id")
     files: list[File] = []
     for file_id in (photo_id, document_id):

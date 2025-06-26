@@ -65,8 +65,8 @@ class ChampionshipOrm(Base):
     stages_count: Mapped[int]
 
     files: Mapped[list["FileMetadataOrm"]] = relationship(
-        primaryjoin="and_(ChampionshipOrm.id == foreign(FileMetadataOrm.parent_id), " \ 
-                    "FileMetadataOrm.parent_type == 'championship')",
+        primaryjoin="""and_(ChampionshipOrm.id == foreign(FileMetadataOrm.parent_id), 
+        FileMetadataOrm.parent_type == 'championship')""",
         cascade="all, delete-orphan"
     )
 
@@ -93,12 +93,12 @@ class StageOrm(Base):
     is_active: Mapped[bool]
 
     files: Mapped[list["FileMetadataOrm"]] = relationship(
-        primaryjoin="and_(StageOrm.id == foreign(FileMetadataOrm.parent_id), " \ 
-                    "FileMetadataOrm.parent_type == 'stage')",
+        primaryjoin="""and_(StageOrm.id == foreign(FileMetadataOrm.parent_id),  
+        FileMetadataOrm.parent_type == 'stage')""",
         cascade="all, delete-orphan"
     )
 
-    judges: Mapped[list["JudgesOrm"]] = relationship(
+    judges: Mapped[list["JudgeOrm"]] = relationship(
         back_populates="stage",
         cascade="all, delete-orphan"
     )
@@ -112,13 +112,19 @@ class StageOrm(Base):
     )
 
 
-class JudgesOrm(Base):
+class JudgeOrm(Base):
     __tablename__ = "judges"
 
     user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
     stage_id: Mapped[int] = mapped_column(ForeignKey("stages.id"), unique=False)
     full_name: Mapped[str]
     criterion: Mapped[str]
+
+    files: Mapped[list["FileMetadataOrm"]] = relationship(
+        primaryjoin="""and_(JudgeOrm.id == foreign(FileMetadataOrm.parent_id), 
+        FileMetadataOrm.parent_type == 'judge')""",
+        cascade="all, delete-orphan"
+    )
 
     stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="judges")
 
@@ -149,6 +155,12 @@ class PilotOrm(Base):
     cars: Mapped[list["CarOrm"]] = relationship(back_populates="pilot")
     number: Mapped[int]
 
+    files: Mapped[list["FileMetadataOrm"]] = relationship(
+        primaryjoin="""and_(PilotOrm.id == foreign(FileMetadataOrm.parent_id), 
+        FileMetadataOrm.parent_type == 'pilot')""",
+        cascade="all, delete-orphan"
+    )
+
     stage: Mapped["StageOrm"] = relationship(argument="StageOrm", back_populates="pilots")
     qualifications: Mapped[list["QualificationOrm"]] = relationship(back_populates="pilot")
 
@@ -158,9 +170,9 @@ class QualificationOrm(Base):
 
     pilot_id: Mapped[int] = mapped_column(ForeignKey("pilots.id"), unique=False, nullable=False)
     attempt: Mapped[int]
-    angle_points: int
-    style_points: int
-    line_points: int
+    angle_points: Mapped[float]
+    style_points: Mapped[float]
+    line_points: Mapped[float]
     total_points: Mapped[float]
 
     pilot: Mapped["PilotOrm"] = relationship(argument="PilotOrm", back_populates="qualifications")

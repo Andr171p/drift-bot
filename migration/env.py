@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from src.drift_bot.infrastructure.database.base import Base
+
 from src.drift_bot.infrastructure.database.models import (
     UserOrm,
-    ReferralOrm,
-    EventOrm,
-    RefereeOrm,
     PilotOrm,
+    JudgeOrm,
+    StageOrm,
+    FileMetadataOrm,
+    ChampionshipOrm,
     QualificationOrm
 )
 

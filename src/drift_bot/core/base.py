@@ -3,8 +3,7 @@ from typing import Generic, TypeVar, Optional, Any
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from .enums import Role
-from .domain import User, Judge, Pilot, File, Stage, Championship
+from .domain import Judge, Pilot, File, Stage, Championship
 from .dto import ActiveChampionship
 
 T = TypeVar("T")
@@ -20,10 +19,6 @@ class CRUDRepository(Generic[T]):
     async def update(self, id: int | str, **kwargs) -> Optional[T]: pass
 
     async def delete(self, id: int | str) -> bool: pass
-
-
-class UserRepository(CRUDRepository[User]):
-    async def get_by_role(self, role: Role) -> list[User]: pass
 
 
 class ChampionshipRepository(CRUDRepository[Championship]):

@@ -23,9 +23,9 @@ class StageForm(StatesGroup):
 
 
 class JudgeForm(StatesGroup):
-    event_id = State()   # ID ивента
+    stage_id = State()   # ID Этапа
     full_name = State()  # ФИО
-    file_id = State()    # ID файла с фото (опционально)
+    photo_id = State()   # ID файла с фото (опционально)
     criterion = State()  # Оцениваемый критерий
 
 

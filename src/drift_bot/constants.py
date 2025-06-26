@@ -2,6 +2,8 @@ from typing import Literal
 
 from pathlib import Path
 
+from .core.enums import Criterion
+
 
 # Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -46,3 +48,9 @@ TTL = 1
 MIN_STAGES_COUNT = 1
 MIN_TITLE_LENGTH = 1
 MAX_TITLE_LENGTH = 100
+
+CRITERION2TEXT: dict[Criterion, str] = {
+    Criterion.ANGLE: "<b>Угол</b>",
+    Criterion.LINE: "<b>Траектория</b>",
+    Criterion.STYLE: "<b>Стиль</b>"
+}

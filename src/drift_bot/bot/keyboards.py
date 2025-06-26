@@ -11,14 +11,8 @@ from .callbacks import (
     JudgeRegistrationCallback
 )
 
-from ..core.enums import Role, Criterion
-
-
-CRITERION_TEXTS: dict[Criterion, str] = {
-    Criterion.ANGLE: "Угол",
-    Criterion.LINE: "Траектория",
-    Criterion.STYLE: "Стиль"
-}
+from ..core.enums import Role
+from ..constants import CRITERION2TEXT
 
 
 def start_keyboard() -> InlineKeyboardMarkup:

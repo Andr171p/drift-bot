@@ -1,13 +1,13 @@
+from datetime import datetime
+
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
-from aiogram_datepicker import Datepicker
-
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..states import StageForm
-from ..utils import get_file, get_datepicker_settings
+from ..utils import get_file
 from ..decorators import role_required, show_progress_bar
 from ..keyboards import numeric_kb, confirm_kb, admin_stage_actions_kb
 from ..enums import AdminChampionshipAction, Confirmation, AdminStageAction
@@ -24,8 +24,6 @@ from ...constants import STAGES_BUCKET
 
 
 stages_router = Router(name=__name__)
-
-datepicker = Datepicker(get_datepicker_settings())
 
 ADMIN_REQUIRED_MESSAGE = "⛔ Добавлять этапы может только администратор!"
 
@@ -108,20 +106,17 @@ async def enter_stage_location(message: Message, state: FSMContext) -> None:
 async def enter_stage_map_link(message: Message, state: FSMContext) -> None:
     await state.update_data(map_link=message.text)
     await state.set_state(StageForm.date)
-    await message.answer(
-        text="Укажите дату проведения этапа: ",
-        reply_markup=datepicker.start_calendar()
-    )
+    await message.answer("Укажите дату проведения этапа: ")
 
 
-@stages_router.callback_query(StageForm.date, Datepicker.datepicker_callback.filter())
+@stages_router.message(StageForm.date)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 @show_progress_bar(StageForm)
-async def enter_stage_date(call: CallbackQuery, callback_data: dict, state: FSMContext) -> None:
-    date = await datepicker.process(call, callback_data)
+async def enter_stage_date(message: Message, state: FSMContext) -> None:
+    date = datetime.now()
     await state.update_data(date=date)
     data = await state.get_data()
-    await call.message.answer(
+    await message.answer(
         text=STAGE_TEMPLATE.format(
             title=data["title"],
             description=data["description"],
@@ -130,7 +125,7 @@ async def enter_stage_date(call: CallbackQuery, callback_data: dict, state: FSMC
             date=data["date"]
         )
     )
-    await call.message.answer(
+    await message.answer(
         text="Подтвердите создание этапа",
         reply_markup=confirm_kb(ConfirmStageCreationCallback)
     )
@@ -151,6 +146,7 @@ async def create_stage(
         stage_service: Depends[CRUDService[Stage]]
 ) -> None:
     data = await state.get_data()
+    await state.clear()
     file = await get_file(file_id=data["photo_id"], call=call)
     stage = Stage(
         championship_id=data["championship_id"],
