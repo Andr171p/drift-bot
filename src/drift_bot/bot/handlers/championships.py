@@ -7,7 +7,7 @@ from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..utils import get_file
 from ..states import ChampionshipForm
-from ..decorators import role_required
+from ..decorators import role_required, show_progress_bar
 from ..enums import Confirmation, AdminChampionshipAction
 from ..keyboards import confirm_kb, admin_championship_actions_kb
 from ..callbacks import ConfirmChampionshipCreationCallback, AdminChampionshipCallback
@@ -29,6 +29,7 @@ ADMIN_REQUIRED_MESSAGE = "⛔ Создавать чемпионаты может
 
 @championships_router.message(Command("/create_championship"))
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+@show_progress_bar(ChampionshipForm)
 async def send_championship_form(message: Message, state: FSMContext) -> None:
     await state.set_state(ChampionshipForm.title)
     await message.answer("Укажите название соревнования: ")
@@ -36,6 +37,7 @@ async def send_championship_form(message: Message, state: FSMContext) -> None:
 
 @championships_router.message(ChampionshipForm.title)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+@show_progress_bar(ChampionshipForm)
 async def enter_championship_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text)
     await state.set_state(ChampionshipForm.description)
@@ -44,6 +46,7 @@ async def enter_championship_title(message: Message, state: FSMContext) -> None:
 
 @championships_router.message(ChampionshipForm.description)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+@show_progress_bar(ChampionshipForm)
 async def enter_championship_description(message: Message, state: FSMContext) -> None:
     await state.update_data(description=message.text)
     await state.set_state(ChampionshipForm.photo_id)
@@ -52,6 +55,7 @@ async def enter_championship_description(message: Message, state: FSMContext) ->
 
 @championships_router.message(ChampionshipForm.photo_id, F.photo)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+@show_progress_bar(ChampionshipForm)
 async def attach_championship_photo(message: Message, state: FSMContext) -> None:
     if message.text != "/skip":
         await state.update_data(photo_id=message.photo[-1].file_id)
@@ -61,6 +65,7 @@ async def attach_championship_photo(message: Message, state: FSMContext) -> None
 
 @championships_router.message(ChampionshipForm.document_id, F.document)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+@show_progress_bar(ChampionshipForm)
 async def attach_championship_regulation(message: Message, state: FSMContext) -> None:
     if message.text != "/skip":
         await state.update_data(docuement_id=message.document.file_id)
@@ -70,6 +75,7 @@ async def attach_championship_regulation(message: Message, state: FSMContext) ->
 
 @championships_router.message(ChampionshipForm.stages_count)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
+@show_progress_bar(ChampionshipForm)
 async def indicate_stages_count(message: Message, state: FSMContext) -> None:
     await state.update_data(stages_count=int(message.text))
     data = await state.get_data()
@@ -119,7 +125,10 @@ async def create_championship(
         )
         await call.message.answer(
             text="✅ Чемпионат успешно создан...",
-            reply_markup=admin_championship_actions_kb(championship_id=created_championship.id)
+            reply_markup=admin_championship_actions_kb(
+                championship_id=created_championship.id,
+                is_active=created_championship.is_active
+            )
         )
     except (CreationError, UploadingFileError):
         await call.message.answer("⚠️ Ошибка при создании чемпионата!")
@@ -157,3 +166,5 @@ async def toggle_championship_activation(
     championship = await championship_repository.read(championship_id)
     is_active = True if not championship.is_active else False
     await championship.update(championship_id, is_active=is_active)
+    text = "🟢 Чемпионат открыт" if is_active else "🔴 Чемпионат закрыт"
+    await call.message.answer(text)
