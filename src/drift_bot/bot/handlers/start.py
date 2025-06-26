@@ -2,17 +2,17 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 
-from ..decorators import save_user
 from ..keyboards import start_keyboard
 from ..callbacks import StartCallback
+from ..decorators import save_user, handle_invited_user
 
 from ...core.enums import Role
-
 
 start_router = Router(name=__name__)
 
 
 @start_router.message(Command("start"))
+@handle_invited_user()
 async def start(message: Message) -> None:
     await message.answer(
         text="Здравствуйте, выберите кем вы являетесь ⬇️",

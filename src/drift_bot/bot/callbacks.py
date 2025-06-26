@@ -43,5 +43,9 @@ class AdminStageCallback(AdminCallback, prefix="stage"):
     action: AdminStageAction
 
 
+class JudgeRegistrationCallback(CallbackData, prefix="judge_registration"):
+    stage_id: int
+
+
 class CriterionChoiceCallback(CallbackData, prefix="criterion_choice"):
     criterion: Criterion

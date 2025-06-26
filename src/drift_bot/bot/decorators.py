@@ -9,19 +9,21 @@ from aiogram.fsm.state import StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from .keyboards import judge_registration_kb
 from .utils import get_form_fields, draw_progress_bar, WIDTH
 
 from ..ioc import container
+from ..utils import parse_referral_code, parse_role_from_code
 
 from ..core.enums import Role
 from ..core.domain import User
 from ..core.base import CRUDRepository
-from ..core.exceptions import CreationError
+from ..core.services import ReferralService
+from ..core.exceptions import CreationError, CodeExpiredError
 
 P = ParamSpec("P")                                    # Параметры оригинальной функции
 R = TypeVar("R")                                      # Возвращаемый тип оригинальной функции
 MessageHandler = Callable[P, Coroutine[Any, Any, R]]  # Обработчик сообщения пользователя
-
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +78,6 @@ def show_progress_bar(
         :param form: FSM форма для заполнения данных
         :param width: Ширина прогресс-бара в символах
         """
-
     def decorator(handler: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         @wraps(handler)
         async def wrapper(
@@ -100,5 +101,36 @@ def show_progress_bar(
             elif isinstance(update, CallbackQuery):
                 await update.message.answer(text)
             return result
+        return wrapper
+    return decorator
+
+
+def handle_invited_user() -> Callable[[MessageHandler[P, R]], MessageHandler[P, R] | None]:
+    """Декоратор для обработки приглашенных пользователей."""
+    def decorator(handler: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
+        @wraps(handler)
+        async def wrapper(message: Message, *args, **kwargs) -> R | None:
+            referral_service = await container.get(ReferralService)
+            url = message.get_url()
+            code = parse_referral_code(url)
+            if not code:
+                return await handler(message, *args, **kwargs)
+            try:
+                referral = await referral_service.login(code)
+                role = parse_role_from_code(code)
+
+                @save_user(role)
+                async def wrapped_handler(msg: Message, *a, **kw) -> R:
+                    await msg.answer(
+                        text="Вам необходимо пройти регистрацию на этап...",
+                        reply_markup=judge_registration_kb(stage_id=referral.stage_id)
+                    )
+                    return handler(msg, *a, **kw)
+
+                return wrapped_handler(message, *args, **kwargs)
+            except CodeExpiredError as e:
+                logger.error(f"Error while login user: {e}")
+                await message.answer("⚠️ Ваша реферальная ссылка истекла!")
+                return None
         return wrapper
     return decorator

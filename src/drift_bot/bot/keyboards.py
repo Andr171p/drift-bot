@@ -7,7 +7,8 @@ from .callbacks import (
     ConfirmCallback,
     CriterionChoiceCallback,
     AdminChampionshipCallback,
-    AdminStageCallback
+    AdminStageCallback,
+    JudgeRegistrationCallback
 )
 
 from ..core.enums import Role, Criterion
@@ -121,3 +122,13 @@ def numeric_kb(numbers: int) -> ReplyKeyboardMarkup:
     for number in range(1, numbers + 1):
         builder.button(text=str(number))
     return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
+
+
+def judge_registration_kb(stage_id: int) -> InlineKeyboardMarkup:
+    """Клавиатура для начала процедуры регистрации судьи на этап."""
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="📝 Начать регистрацию",
+        callback_data=JudgeRegistrationCallback(stage_id=stage_id).pack()
+    )
+    return builder.as_markup()
