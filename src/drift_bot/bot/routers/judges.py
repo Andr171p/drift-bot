@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -22,6 +24,8 @@ from ...core.exceptions import CreationError, UploadingFileError
 
 from ...templates import JUDGE_TEMPLATE
 from ...constants import CRITERION2TEXT, JUDGES_BUCKET
+
+logger = logging.getLogger(__name__)
 
 judges_router = Router(name=__name__)
 
@@ -100,17 +104,23 @@ async def confirm_judge_registration(
         state: FSMContext,
         judge_service: Depends[CRUDService[Judge]]
 ) -> None:
-    data = await state.get_data()
-    await state.clear()
-    file = await get_file(file_id=data["photo_id"], call=call)
-    judge = Judge(
-        user_id=call.message.from_user.id,
-        stage_id=data["stage_id"],
-        full_name=data["full_name"],
-        criterion=data["criterion"]
-    )
     try:
+        data = await state.get_data()
+        await state.clear()
+        file = await get_file(file_id=data["photo_id"], call=call)
+        judge = Judge(
+            user_id=call.message.from_user.id,
+            stage_id=data["stage_id"],
+            full_name=data["full_name"],
+            criterion=data["criterion"]
+        )
         _ = await judge_service.create(judge, files=[file], bucket=JUDGES_BUCKET)
         await call.message.answer("✅ Вы успешно зарегистрированы!")
-    except (CreationError, UploadingFileError):
+    except (CreationError, UploadingFileError) as e:
+        logging.error(f"Error while judge registration: {e}")
         await call.message.answer("⚠️ Ошибка при регистрации!")
+    except KeyError:
+        await call.message.answer("⚠️ Ваша сессия истекла, пройдите регистрацию заново!")
+    except Exception as e:
+        logging.error(f"Error occurred: {e}")
+        await call.message.answer("⚠️ Произошла ошибка, приносим свои извинения...")

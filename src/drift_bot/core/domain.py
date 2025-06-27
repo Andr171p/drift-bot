@@ -9,9 +9,9 @@ from .enums import Role, Criterion, CarType, FileType
 from ..constants import (
     BOT_URL,
     ATTEMPT,
+    PHOTO_FORMATS,
     MAX_TITLE_LENGTH,
     MIN_STAGES_COUNT,
-    PHOTO_FORMATS,
     DOCUMENT_FORMATS
 )
 

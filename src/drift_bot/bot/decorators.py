@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def role_required(
-        role: Role,
+        *roles: Role,
         error_message: str
 ) -> Callable[[MessageHandler[P, R]], MessageHandler[P, R] | None]:
     """Декоратор для проверки прав доступа."""
@@ -41,8 +41,8 @@ def role_required(
                 user_repository = await request_container.get(CRUDRepository[User])
                 user_id = message.from_user.id
                 user = await user_repository.read(user_id)
-                if user.role != role:
-                    logger.warning(f"Required role: {role}")
+                if user.role not in roles:
+                    logger.warning(f"Access denied")
                     await message.answer(error_message)
             return await func(message, *args, **kwargs)
         return wrapper
@@ -86,7 +86,7 @@ def show_progress_bar(
         async def wrapper(update: Message | CallbackQuery, state: FSMContext, *args,  **kwargs) -> R | None:
             steps = get_form_fields(form)
             data = await state.get_data()
-            completed_steps = sum(1 for step in steps if step in data)
+            completed_steps = sum(1 for step in steps if step in data) + 1
             progress_bar = draw_progress_bar(completed_steps, len(steps), width=width)
             progress_percent = round(completed_steps / len(steps) * 100, 2)
             result = await handler(update, state, *args, **kwargs)

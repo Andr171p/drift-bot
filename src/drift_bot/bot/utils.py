@@ -1,4 +1,4 @@
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 
 from ..core.domain import File
@@ -21,3 +21,7 @@ def draw_progress_bar(filled: int, total: int, width: int = WIDTH) -> str:
 
 def get_form_fields(form: StatesGroup) -> list[str]:
     return [attr for attr in dir(form) if isinstance(getattr(form, attr), State)]
+
+
+async def loading(update: Message | CallbackQuery) -> None:
+    ...

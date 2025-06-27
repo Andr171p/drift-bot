@@ -11,7 +11,7 @@ from ..utils import get_file
 from ..decorators import role_required, show_progress_bar
 from ..keyboards import numeric_kb, confirm_kb, admin_stage_actions_kb
 from ..enums import AdminChampionshipAction, Confirmation, AdminStageAction
-from ..callbacks import AdminChampionshipCallback, ConfirmStageCreationCallback, AdminStageCallback
+from ..callbacks import AdminChampionshipActionCallback, ConfirmStageCreationCallback, AdminStageCallback
 
 from ...core.enums import Role
 from ...core.base import CRUDRepository

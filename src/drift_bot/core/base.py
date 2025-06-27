@@ -24,9 +24,15 @@ class CRUDRepository(Generic[T]):
 class ChampionshipRepository(CRUDRepository[Championship]):
     async def get_active(self) -> list[ActiveChampionship]: pass
 
+    async def paginate(self, page: int, limit: int, is_active: bool = True) -> list[Championship]: pass
+
+    async def count(self) -> int: pass
+
+    async def get_stages(self, id: int) -> list[Stage]: pass
+
 
 class StageRepository(CRUDRepository[Stage]):
-    async def get_nearest(self, date: datetime) -> Optional[Stage]: pass
+    async def get_nearest(self, championship_id: int, date: datetime) -> Optional[Stage]: pass
 
 
 class PilotRepository(CRUDRepository[Pilot]):

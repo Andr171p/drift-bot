@@ -1,15 +1,16 @@
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import ChampionshipOrm
+from ..models import ChampionshipOrm, StageOrm
 from ..utils import create_files
 
 from src.drift_bot.core.dto import ActiveChampionship
-from src.drift_bot.core.domain import Championship
+from src.drift_bot.core.domain import Championship, Stage
 from src.drift_bot.core.base import ChampionshipRepository
 from src.drift_bot.core.exceptions import (
     CreationError,
@@ -112,3 +113,45 @@ class SQLChampionshipRepository(ChampionshipRepository):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading active championships: {e}") from e
+
+    async def paginate(self, page: int, limit: int, is_active: bool = True) -> list[Championship]:
+        try:
+            offset = (page - 1) * limit
+            stmt = select(ChampionshipOrm)
+            if is_active:
+                stmt = stmt.where(ChampionshipOrm.is_active == is_active)
+            stmt = stmt.offset(offset).limit(limit)
+            results = await self.session.execute(stmt)
+            championship_orms = results.scalars().all()
+            return [
+                Championship.model_validate(championship_orm)
+                for championship_orm in championship_orms
+            ]
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise ReadingError(f"Error while paginating championships: {e}") from e
+
+    async def count(self) -> int:
+        try:
+            stmt = (
+                select(func.count())
+                .select_from(ChampionshipOrm)
+            )
+            result = await self.session.execute(stmt)
+            return result.scalar()
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise ReadingError(f"Error while reading count: {e}") from e
+
+    async def get_stages(self, id: int) -> list[Stage]:
+        try:
+            stmt = (
+                select(StageOrm)
+                .where(StageOrm.championship_id == id)
+            )
+            results = await self.session.execute(stmt)
+            stage_orms = results.scalars().all()
+            return [Stage.model_validate(stage_orm) for stage_orm in stage_orms]
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise ReadingError(f"Error while reading stages: {e}") from e

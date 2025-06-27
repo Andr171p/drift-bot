@@ -3,7 +3,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from dishka.integrations.aiogram import setup_dishka
 
-from .handlers import router
+from .routers import router
 from ..ioc import container
 
 

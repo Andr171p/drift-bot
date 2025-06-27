@@ -90,11 +90,14 @@ class SQLStageRepository(StageRepository):
             await self.session.rollback()
             raise DeletionError(f"Error while deleting stage: {e}") from e
 
-    async def get_nearest(self, date: datetime) -> Optional[Stage]:
+    async def get_nearest(self, championship_id: int, date: datetime) -> Optional[Stage]:
         try:
             stmt = (
                 select(StageOrm)
-                .where(StageOrm.date >= date)
+                .where(
+                    (StageOrm.date >= date) &
+                    (StageOrm.championship_id == championship_id)
+                )
                 .order_by(StageOrm.date.asc())
                 .limit(1)
             )

@@ -13,7 +13,21 @@ class AdminChampionshipAction(StrEnum):
     TOGGLE_ACTIVATION = "toggle_activation"  # Сделать активным / деактивировать
 
 
+class ChampionshipAction(StrEnum):
+    STAGES_SCHEDULE = "stages_schedule"    # Расписание этапов
+    READ_REGULATIONS = "read_regulations"  # Ознакомится с регламентом
+    NEAREST_STAGE = "nearest_stage"        # Ближайший этап
+
+
 class AdminStageAction(StrEnum):
     DELETE = "delete"
     TOGGLE_REGISTRATION = "toggle_registration"  # Открыть / закрыть регистрацию
-    INVITE_JUDGE = "invite_judge"
+    INVITE_JUDGE = "invite_judge"                # Пригласить судей
+
+
+class CalendarAction(StrEnum):
+    PREVIOUS = "PREVIOUS"
+    NEXT = "NEXT"
+    TODAY = "TODAY"
+    IGNORE = "IGNORE"
+    DAY = "DAY"
