@@ -3,8 +3,6 @@ from aiogram.fsm.state import StatesGroup, State
 
 from ..core.domain import File
 
-WIDTH = 10  # Ширина прогресс бара
-
 
 async def get_file(file_id: str, call: CallbackQuery) -> File:
     file = await call.bot.get_file(file_id=file_id)
@@ -13,7 +11,7 @@ async def get_file(file_id: str, call: CallbackQuery) -> File:
     return File(data=data.read(), file_name=file_name)
 
 
-def draw_progress_bar(filled: int, total: int, width: int = WIDTH) -> str:
+def draw_progress_bar(filled: int, total: int, width: int) -> str:
     filled_blocks = round((filled / total) * width)
     empty_blocks = width - filled_blocks
     return "▰" * filled_blocks + "▱" * empty_blocks

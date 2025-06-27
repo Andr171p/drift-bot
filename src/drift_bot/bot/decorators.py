@@ -11,7 +11,7 @@ from aiogram.types import CallbackQuery, Message
 from dishka import Scope
 
 from .keyboards import judge_registration_kb
-from .utils import get_form_fields, draw_progress_bar, WIDTH
+from .utils import get_form_fields, draw_progress_bar
 
 from ..ioc import container
 from ..utils import parse_referral_code, parse_role_from_code
@@ -21,6 +21,8 @@ from ..core.domain import User
 from ..core.base import CRUDRepository
 from ..core.services import ReferralService
 from ..core.exceptions import CreationError, CodeExpiredError
+
+WIDTH = 10  # Ширина прогресс бара
 
 P = ParamSpec("P")                                    # Параметры оригинальной функции
 R = TypeVar("R")                                      # Возвращаемый тип оригинальной функции
