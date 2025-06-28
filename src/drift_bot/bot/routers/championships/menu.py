@@ -15,7 +15,7 @@ from ...callbacks import (
     CalendarActionCallback
 )
 
-from src.drift_bot.core.enums import FileType, Role
+from src.drift_bot.core.enums import FileType
 from src.drift_bot.core.domain import Championship
 from src.drift_bot.core.services import CRUDService
 from src.drift_bot.core.base import ChampionshipRepository

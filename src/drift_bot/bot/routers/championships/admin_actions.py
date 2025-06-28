@@ -2,7 +2,7 @@ import logging
 
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, BufferedInputFile
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
@@ -49,7 +49,11 @@ async def send_my_championships(
                 stages_count=championship.stages_count
             )
             if photo:
-                await message.answer_photo(photo=photo, caption=text, reply_markup=keyboard)
+                await message.answer_photo(
+                    photo=BufferedInputFile(file=photo.data, filename=photo.file_name),
+                    caption=text,
+                    reply_markup=keyboard
+                )
             else:
                 await message.answer(text=text, reply_markup=keyboard)
 
@@ -87,9 +91,9 @@ async def toggle_championship_activation(
         callback_data: AdminChampionshipActionCallback,
         championship_repository: Depends[ChampionshipRepository]
 ) -> None:
-    championship = await championship_repository.read(callback_data.id)
-    is_active = True if not championship.is_active else False
     try:
+        championship = await championship_repository.read(callback_data.id)
+        is_active = True if not championship.is_active else False
         await championship.update(callback_data.id, is_active=is_active)
         text = "🟢 Чемпионат открыт" if is_active else "🔴 Чемпионат закрыт"
         await call.message.answer(text)

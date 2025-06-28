@@ -130,7 +130,7 @@ async def confirm_championship_creation(
             if file_id is not None
         ]
         championship = Championship(
-            user_id=call.message.from_user.id,
+            user_id=call.from_user.id,
             title=data["title"],
             description=data["description"],
             stages_count=data["stages_count"]

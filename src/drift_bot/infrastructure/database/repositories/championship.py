@@ -160,9 +160,11 @@ class SQLChampionshipRepository(ChampionshipRepository):
             stmt = (
                 select(ChampionshipOrm)
                 .where(ChampionshipOrm.user_id == user_id)
+                .options(selectinload(ChampionshipOrm.files))
             )
             results = await self.session.execute(stmt)
             championship_orms = results.scalars().all()
+            print(len(championship_orms))
             return [
                 Championship.model_validate(championship_orm)
                 for championship_orm in championship_orms
