@@ -71,8 +71,8 @@ class SQLChampionshipRepository(ChampionshipRepository):
         try:
             stmt = (
                 update(ChampionshipOrm)
-                .values(**kwargs)
                 .where(ChampionshipOrm.id == id)
+                .values(**kwargs)
                 .options(selectinload(ChampionshipOrm.files))
                 .returning(ChampionshipOrm)
             )
@@ -154,3 +154,19 @@ class SQLChampionshipRepository(ChampionshipRepository):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading stages: {e}") from e
+
+    async def get_by_user_id(self, user_id: int) -> list[Championship]:
+        try:
+            stmt = (
+                select(ChampionshipOrm)
+                .where(ChampionshipOrm.user_id == user_id)
+            )
+            results = await self.session.execute(stmt)
+            championship_orms = results.scalars().all()
+            return [
+                Championship.model_validate(championship_orm)
+                for championship_orm in championship_orms
+            ]
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise ReadingError(f"Error while reading by user_id: {e}") from e

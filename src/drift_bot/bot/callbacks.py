@@ -67,6 +67,10 @@ class ChampionshipPageCallback(PageCallback, prefix="championship"):
     pass
 
 
+class MyChampionshipPageCallback(ChampionshipPageCallback, prefix="admin"):
+    pass
+
+
 class ChampionshipCallback(CallbackData, prefix="championship"):
     id: int
 

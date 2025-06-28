@@ -85,7 +85,7 @@ def admin_championship_actions_kb(id: int, is_active: bool) -> InlineKeyboardMar
         callback_data=AdminChampionshipActionCallback(
             id=id,
             action=AdminChampionshipAction.TOGGLE_ACTIVATION
-        )
+        ).pack()
     )
     builder.adjust(1)
     return builder.as_markup()

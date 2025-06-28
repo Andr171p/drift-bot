@@ -1,25 +1,57 @@
 import logging
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.filters import Command
+from aiogram.types import CallbackQuery, Message
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ...decorators import role_required
 from ...enums import AdminChampionshipAction
 from ...callbacks import AdminChampionshipActionCallback
+from ...keyboards import admin_championship_actions_kb
 
-from src.drift_bot.core.enums import Role
+from src.drift_bot.core.enums import Role, FileType
 from src.drift_bot.core.domain import Championship
 from src.drift_bot.core.services import CRUDService
 from src.drift_bot.core.base import ChampionshipRepository
-from src.drift_bot.core.exceptions import DeletionError, RemovingFileError
+from src.drift_bot.core.exceptions import DeletionError, RemovingFileError, UpdateError
+
+from src.drift_bot.templates import CHAMPIONSHIP_TEMPLATE
 
 logger = logging.getLogger(name=__name__)
 
 championship_admin_actions_router = Router(name=__name__)
 
 ADMIN_REQUIRED_MESSAGE = "⛔ Редактировать чемпионат и добавлять этапы может только администратор!"
+
+
+@championship_admin_actions_router.message(Command("my_championships"))
+@role_required(Role.ADMIN, error_message="")
+async def send_my_championships(
+        message: Message,
+        championship_repository: Depends[ChampionshipRepository],
+        championship_crud_service: Depends[CRUDService[Championship]]
+) -> None:
+    my_championships = await championship_repository.get_by_user_id(message.from_user.id)
+    if not my_championships:
+        await message.answer("""Вы пока не создали ни один чемпионат, 
+            вы можете это сделать с помощью команды /create_championship
+        """)
+    else:
+        for my_championship in my_championships:
+            championship, files = await championship_crud_service.read(my_championship.id)
+            photo = next((file for file in files if file.type == FileType.PHOTO), None)
+            keyboard = admin_championship_actions_kb(id=championship.id, is_active=championship.is_active)
+            text = CHAMPIONSHIP_TEMPLATE.format(
+                title=championship.title,
+                description=championship.description,
+                stages_count=championship.stages_count
+            )
+            if photo:
+                await message.answer_photo(photo=photo, caption=text, reply_markup=keyboard)
+            else:
+                await message.answer(text=text, reply_markup=keyboard)
 
 
 @championship_admin_actions_router.callback_query(
@@ -41,6 +73,9 @@ async def delete_championship(
     except (DeletionError, RemovingFileError) as e:
         logger.error(f"Error occurred: {e}")
         await call.message.answer("⚠️ Ошибка при удалении чемпионата!")
+    except Exception as e:
+        logger.error(f"Error occurred: {e}")
+        await call.message.answer("⚠️ Произошла ошибка, приносим свои извинения...")
 
 
 @championship_admin_actions_router.callback_query(
@@ -54,6 +89,13 @@ async def toggle_championship_activation(
 ) -> None:
     championship = await championship_repository.read(callback_data.id)
     is_active = True if not championship.is_active else False
-    await championship.update(callback_data.id, is_active=is_active)
-    text = "🟢 Чемпионат открыт" if is_active else "🔴 Чемпионат закрыт"
-    await call.message.answer(text)
+    try:
+        await championship.update(callback_data.id, is_active=is_active)
+        text = "🟢 Чемпионат открыт" if is_active else "🔴 Чемпионат закрыт"
+        await call.message.answer(text)
+    except UpdateError as e:
+        logger.error(f"Error occurred: {e}")
+        await call.message.answer("⚠️ Ошибка при обновлении чемпионата!")
+    except Exception as e:
+        logger.error(f"Error occurred: {e}")
+        await call.message.answer("⚠️ Произошла ошибка, приносим свои извинения...")

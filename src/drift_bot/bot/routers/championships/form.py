@@ -78,7 +78,7 @@ async def attach_championship_photo(
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 @show_progress_bar(ChampionshipForm)
 async def attach_championship_regulation(message: Message, state: FSMContext) -> None:
-    await state.update_data(docuement_id=message.document.file_id)
+    await state.update_data(document_id=message.document.file_id)
     await state.set_state(ChampionshipForm.stages_count)
     await message.answer("Укажите количество этапов (напишите только число): ")
 

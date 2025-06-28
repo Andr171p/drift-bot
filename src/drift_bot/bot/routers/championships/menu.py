@@ -15,7 +15,7 @@ from ...callbacks import (
     CalendarActionCallback
 )
 
-from src.drift_bot.core.enums import FileType
+from src.drift_bot.core.enums import FileType, Role
 from src.drift_bot.core.domain import Championship
 from src.drift_bot.core.services import CRUDService
 from src.drift_bot.core.base import ChampionshipRepository
@@ -28,7 +28,7 @@ DEFAULT_DAY = 1
 championship_menu_router = Router(name=__name__)
 
 
-@championship_menu_router.callback_query(Command("championships"))
+@championship_menu_router.message(Command("championships"))
 async def send_start_championships_menu(
         message: Message,
         championship_repository: Depends[ChampionshipRepository]
