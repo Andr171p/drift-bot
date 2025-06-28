@@ -92,9 +92,7 @@ def show_progress_bar(
             progress_bar = draw_progress_bar(completed_steps, len(steps), width=width)
             progress_percent = round(completed_steps / len(steps) * 100, 2)
             result = await handler(update, state, *args, **kwargs)
-            text = f"""Заполнено:
-            {progress_bar} {progress_percent}%
-            """
+            text = f"{progress_bar} {progress_percent}%"
             if isinstance(update, Message):
                 await update.answer(text)
             elif isinstance(update, CallbackQuery):

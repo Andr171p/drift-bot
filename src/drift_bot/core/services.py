@@ -12,7 +12,6 @@ from .exceptions import RanOutNumbersError, CodeExpiredError
 from ..constants import CODE_LENGTH, DAYS_EXPIRE
 from ..utils import generate_file_name
 
-
 T = TypeVar("T", bound=Union[Championship, Stage, Pilot, Judge])
 
 

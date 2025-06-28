@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 
 from aiogram import F, Router
@@ -10,7 +12,6 @@ from dishka.integrations.aiogram import FromDishka as Depends
 from ...utils import get_file
 from ...enums import Confirmation
 from ...filters import FileFilter
-from ...types import FilteredFile
 from ...states import ChampionshipForm
 from ...types import ChampionshipFormData
 from ...decorators import role_required, show_progress_bar
@@ -64,15 +65,16 @@ async def enter_championship_description(message: Message, state: FSMContext) ->
 async def attach_championship_photo(
         message: Message,
         state: FSMContext,
-        filtered_file: FilteredFile
+        file_id: Optional[str] = None,
+        skip: bool = False
 ) -> None:
-    if not filtered_file["skip"]:
-        await state.update_data(photo_id=filtered_file["file_id"])
+    if not skip:
+        await state.update_data(photo_id=file_id)
     await state.set_state(ChampionshipForm.document_id)
     await message.answer("Прикрепите регламент соревнований: ")
 
 
-@championship_form_router.message(ChampionshipForm.document_id, F.docuemnt)
+@championship_form_router.message(ChampionshipForm.document_id, F.document)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 @show_progress_bar(ChampionshipForm)
 async def attach_championship_regulation(message: Message, state: FSMContext) -> None:
@@ -87,15 +89,18 @@ async def attach_championship_regulation(message: Message, state: FSMContext) ->
 async def indicate_stages_count(message: Message, state: FSMContext) -> None:
     await state.update_data(stages_count=int(message.text))
     data: ChampionshipFormData = await state.get_data()
-    await message.answer_photo(
-        photo=data["photo_id"],
-        caption=CHAMPIONSHIP_TEMPLATE.format(
-            title=data["title"],
-            description=data["description"],
-            stages_count=data["stages_count"]
-        ),
-        reply_markup=confirm_kb(ConfirmChampionshipCreationCallback)
+    photo = data.get("photo_id")
+    text = CHAMPIONSHIP_TEMPLATE.format(
+        title=data["title"],
+        description=data["description"],
+        stages_count=data["stages_count"]
     )
+    keyboard = confirm_kb(ConfirmChampionshipCreationCallback)
+    if not photo:
+        await message.answer(text=text)
+    else:
+        await message.answer_photo(photo=photo, caption=text)
+    await message.answer(text="Подтвердить создание ⬇️", reply_markup=keyboard)
 
 
 @championship_form_router.callback_query(

@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import select, update, delete, func
