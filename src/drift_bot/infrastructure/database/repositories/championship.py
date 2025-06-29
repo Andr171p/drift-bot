@@ -33,12 +33,13 @@ class SQLChampionshipRepository(ChampionshipRepository):
             )
             self.session.add(championship_orm)
             await self.session.flush()
-            await create_files(
-                self.session,
-                championship.files,
-                parent_id=championship_orm.id,
-                parent_type="championship"
-            )
+            if championship.files:
+                await create_files(
+                    self.session,
+                    championship.files,
+                    parent_id=championship_orm.id,
+                    parent_type="championship"
+                )
             await self.session.commit()
             await self.session.refresh(championship_orm)
             stmt = (
@@ -147,11 +148,15 @@ class SQLChampionshipRepository(ChampionshipRepository):
         try:
             stmt = (
                 select(StageOrm)
+                .options(selectinload(StageOrm.files))
                 .where(StageOrm.championship_id == id)
             )
             results = await self.session.execute(stmt)
             stage_orms = results.scalars().all()
-            return [Stage.model_validate(stage_orm) for stage_orm in stage_orms]
+            return [
+                Stage.model_validate(stage_orm)
+                for stage_orm in stage_orms
+            ]
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading stages: {e}") from e
@@ -165,7 +170,6 @@ class SQLChampionshipRepository(ChampionshipRepository):
             )
             results = await self.session.execute(stmt)
             championship_orms = results.scalars().all()
-            print(len(championship_orms))
             return [
                 Championship.model_validate(championship_orm)
                 for championship_orm in championship_orms

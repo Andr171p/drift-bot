@@ -1,4 +1,4 @@
-from typing import Sequence, Optional, Generic, TypeVar, Union
+from typing import Sequence, Optional, Generic, TypeVar, Protocol
 
 import random
 import secrets
@@ -6,13 +6,18 @@ from datetime import datetime, timedelta
 
 from .enums import Role
 from .base import FileStorage, CRUDRepository
-from .domain import Championship, Stage,  Pilot, Referral, Judge, File, FileMetadata
+from .domain import Referral, File, FileMetadata
 from .exceptions import RanOutNumbersError, CodeExpiredError
 
 from ..constants import CODE_LENGTH, DAYS_EXPIRE
 from ..utils import generate_file_name
 
-T = TypeVar("T", bound=Union[Championship, Stage, Pilot, Judge])
+
+class ModelWithFiles(Protocol):
+    files: list[FileMetadata]
+
+
+T = TypeVar("T", bound=ModelWithFiles)
 
 
 class NumberGenerator:
@@ -58,7 +63,7 @@ class CRUDService(Generic[T]):
                     uploaded_date=datetime.now()
                 )
                 files_metadata.append(file_metadata)
-        model.files = files_metadata if files_metadata else model
+        model.files = files_metadata
         created_model = await self._crud_repository.create(model)
         return created_model
 

@@ -11,13 +11,12 @@ async def create_files(
         parent_id: int,
         parent_type: str
 ) -> None:
-    if files:
-        file_orms = [
-            FileMetadataOrm(
-                **file.model_dump(exclude={"id"}),
-                parent_id=parent_id,
-                parent_type=parent_type
-            )
-            for file in files
-        ]
-        session.add_all(file_orms)
+    file_orms = [
+        FileMetadataOrm(
+            **file.model_dump(exclude={"id"}),
+            parent_id=parent_id,
+            parent_type=parent_type
+        )
+        for file in files
+    ]
+    session.add_all(file_orms)

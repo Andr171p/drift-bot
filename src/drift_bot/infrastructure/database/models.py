@@ -65,7 +65,8 @@ class ChampionshipOrm(Base):
     files: Mapped[list["FileMetadataOrm"]] = relationship(
         primaryjoin="""and_(ChampionshipOrm.id == foreign(FileMetadataOrm.parent_id), 
         FileMetadataOrm.parent_type == 'championship')""",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="select"
     )
 
     stages: Mapped[list["StageOrm"]] = relationship(
@@ -93,7 +94,8 @@ class StageOrm(Base):
     files: Mapped[list["FileMetadataOrm"]] = relationship(
         primaryjoin="""and_(StageOrm.id == foreign(FileMetadataOrm.parent_id),  
         FileMetadataOrm.parent_type == 'stage')""",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="select"
     )
 
     judges: Mapped[list["JudgeOrm"]] = relationship(

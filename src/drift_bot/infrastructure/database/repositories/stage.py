@@ -33,15 +33,16 @@ class SQLStageRepository(StageRepository):
             )
             self.session.add(stage_orm)
             await self.session.flush()
-            await create_files(
-                self.session,
-                stage.files,
-                parent_id=stage_orm.id,
-                parent_type="stage"
-            )
+            if stage.files:
+                await create_files(
+                    self.session,
+                    stage.files,
+                    parent_id=stage_orm.id,
+                    parent_type="stage"
+                )
             await self.session.commit()
             await self.session.refresh(stage_orm)
-            return Stage.model_dump(stage_orm)
+            return Stage.model_validate(stage_orm)
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise CreationError(f"Error while creating stage: {e}") from e

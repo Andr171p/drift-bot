@@ -7,7 +7,11 @@ from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from dishka.integrations.aiogram import FromDishka as Depends
 
 from ..enums import ChampionshipAction, CalendarAction
-from ..keyboards import paginate_championships_kb, championship_actions_kb, CalendarKeyboard
+from ..keyboards import (
+    paginate_championships_kb,
+    championship_actions_kb,
+    CalendarKeyboard,
+)
 from ..callbacks import (
     ChampionshipPageCallback,
     ChampionshipCallback,
@@ -16,11 +20,12 @@ from ..callbacks import (
 )
 
 from src.drift_bot.core.enums import FileType
-from src.drift_bot.core.domain import Championship
+from src.drift_bot.core.domain import Championship, Stage
 from src.drift_bot.core.services import CRUDService
-from src.drift_bot.core.base import ChampionshipRepository
+from src.drift_bot.core.base import ChampionshipRepository, StageRepository
 
-from src.drift_bot.templates import CHAMPIONSHIP_TEMPLATE
+from src.drift_bot.templates import CHAMPIONSHIP_TEMPLATE, STAGE_TEMPLATE
+from src.drift_bot.utils import find_target_file
 
 PAGE, LIMIT = 1, 3
 DEFAULT_DAY = 1
@@ -119,11 +124,46 @@ async def send_stages_schedule_of_championship(
     await call.message.answer(text="📅 Расписание этапов", reply_markup=calendar_kb())
 
 
-@championships_router.callback_query(CalendarActionCallback.filter(F.action == CalendarAction.NEXT))
+@championships_router.callback_query(
+    CalendarActionCallback.filter(F.action == CalendarAction.NEXT)
+)
 async def send_next_stage_schedule_of_championship(
         call: CallbackQuery,
-        callback_date: CalendarActionCallback,
+        callback_data: CalendarActionCallback,
         championship_repository: Depends[ChampionshipRepository]
 ) -> None:
-    date = datetime(year=callback_date.year, month=callback_date.month, day=DEFAULT_DAY)
+    date = datetime(year=callback_data.year, month=callback_data.month, day=DEFAULT_DAY)
     calendar_kb = CalendarKeyboard(current_date=date)
+
+
+@championships_router.callback_query(
+    ChampionshipActionCallback.filter(F.action == ChampionshipAction.NEAREST_STAGE)
+)
+async def send_nearest_stage_of_championship(
+        call: CallbackQuery,
+        callback_data: ChampionshipActionCallback,
+        stage_repository: Depends[StageRepository],
+        stage_crud_service: Depends[CRUDService[Stage]]
+) -> None:
+    stage = await stage_repository.get_nearest(callback_data.id, date=datetime.now())
+    if not stage:
+        await call.message.answer("Пока нет ни одного этапа...")
+        return
+    text = STAGE_TEMPLATE.format(
+        title=stage.title,
+        description=stage.description,
+        location=stage.location,
+        map_link=stage.map_link,
+        date=stage.date
+    )
+    _, files = await stage_crud_service.read(stage.id)
+    photo = find_target_file(files, target_type=FileType.PHOTO)
+    keyboard = ...
+    if photo:
+        await call.message.answer_photo(
+            photo=BufferedInputFile(file=photo.data, filename=photo.file_name),
+            caption=text,
+            reply_markup=keyboard
+        )
+    else:
+        await call.message.answer(text=text, reply_markup=keyboard)

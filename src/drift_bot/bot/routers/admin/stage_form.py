@@ -17,7 +17,7 @@ from ...decorators import role_required, show_progress_bar
 from ...keyboards import numeric_kb, confirm_kb, admin_stage_actions_kb
 from ...callbacks import AdminChampionshipActionCallback, ConfirmStageCreationCallback
 
-from src.drift_bot.core.domain import Stage, File
+from src.drift_bot.core.domain import Stage
 from src.drift_bot.core.enums import Role, FileType
 from src.drift_bot.core.services import CRUDService
 from src.drift_bot.core.base import ChampionshipRepository
@@ -161,10 +161,8 @@ async def confirm_stage_creation(
 ) -> None:
     data = await state.get_data()
     await state.clear()
-    file: File | None = None
     photo_id = data.get("photo_id")
-    if photo_id:
-        file = await get_file(file_id=photo_id, call=call)
+    files = [await get_file(file_id=photo_id, call=call)] if photo_id else None
     stage = Stage(
         championship_id=data["championship_id"],
         number=data["number"],
@@ -175,7 +173,7 @@ async def confirm_stage_creation(
         date=data["date"]
     )
     try:
-        created_stage = await stage_crud_service.create(stage, files=[file], bucket=STAGES_BUCKET)
+        created_stage = await stage_crud_service.create(stage, files=files, bucket=STAGES_BUCKET)
         await call.message.answer(
             text="✅ Этап успешно создан...",
             reply_markup=admin_stage_actions_kb(

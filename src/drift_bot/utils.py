@@ -1,6 +1,9 @@
+from typing import Optional
+
 from uuid import uuid4
 
-from .core.enums import Role
+from .core.enums import Role, FileType
+from .core.domain import File
 
 
 def parse_referral_code(url: str) -> str:
@@ -17,3 +20,8 @@ def parse_role_from_code(code: str) -> Role:
 def generate_file_name(format: str) -> str:
     """Генерирует уникальное имя для файла."""
     return f"{uuid4()}.{format}"
+
+
+def find_target_file(files: list[File], target_type: FileType) -> Optional[File]:
+    """Ищет заданный файл в коллекции файлов."""
+    return next((file for file in files if file.type == target_type), None)
