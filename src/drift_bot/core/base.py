@@ -3,7 +3,7 @@ from typing import Generic, TypeVar, Optional, Any
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from .domain import Judge, Pilot, File, Stage, Championship
+from .domain import Judge, Pilot, Stage, Championship
 from .dto import ActiveChampionship
 
 T = TypeVar("T")
@@ -60,14 +60,3 @@ class FileStorage(ABC):
 
     @abstractmethod
     async def remove_file(self, key: str, bucket: str) -> None: pass
-
-
-class Sender(ABC):
-    @abstractmethod
-    async def send(
-            self,
-            recipient_id: int,
-            message: str,
-            file: Optional[File],
-            **kwargs
-    ) -> None: pass
