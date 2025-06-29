@@ -13,10 +13,10 @@ from ..keyboards import (
     CalendarKeyboard,
 )
 from ..callbacks import (
-    ChampionshipPageCallback,
-    ChampionshipCallback,
     ChampionshipActionCallback,
-    CalendarActionCallback
+    ChampionshipPageCallback,
+    CalendarActionCallback,
+    ChampionshipCallback
 )
 
 from src.drift_bot.core.enums import FileType
@@ -81,7 +81,7 @@ async def choose_championship(
         stages_count=championship.stages_count
     )
     keyboard = championship_actions_kb(callback_data.id)
-    photo = next((file for file in files if file.type == FileType.PHOTO), None)
+    photo = find_target_file(files, target_type=FileType.PHOTO)
     if photo:
         await call.message.answer_photo(
             photo=BufferedInputFile(file=photo.data, filename=photo.file_name),
@@ -101,7 +101,7 @@ async def send_championship_regulations(
         championship_crud_service: Depends[CRUDService[Championship]]
 ) -> None:
     _, files = await championship_crud_service.read(callback_data.id)
-    document = next((file for file in files if file.type == FileType.DOCUMENT), None)
+    document = find_target_file(files, target_type=FileType.DOCUMENT)
     if not document:
         await call.message.answer("У этого чемпионата пока нет регламента...")
     else:
