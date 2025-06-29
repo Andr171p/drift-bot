@@ -25,8 +25,8 @@ async def start(message: Message) -> None:
 async def handle_admin(call: CallbackQuery) -> None:
     await call.message.answer("""<b><u>Доступные команды</u></b>
     
-     * /create_championship - создаёт соревнование
-     * /my_championships - получает все соревнования
+     * /create_championship - создаёт чемпионат
+     * /my_championships - мои чемпионаты
     """)
 
 

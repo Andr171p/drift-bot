@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 
 from aiogram import F, Router
@@ -6,33 +8,34 @@ from aiogram.types import Message, CallbackQuery
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
-from ..utils import get_file
-from ..states import JudgeForm
-from ..enums import Confirmation
-from ..keyboards import choose_criterion_kb, confirm_kb
-from ..decorators import role_required, show_progress_bar
-from ..callbacks import (
+from ...utils import get_file
+from ...states import JudgeForm
+from ...filters import FileFilter
+from ...enums import Confirmation
+from ...keyboards import choose_criterion_kb, confirm_kb
+from ...decorators import role_required, show_progress_bar
+from ...callbacks import (
     JudgeRegistrationCallback,
     CriterionChoiceCallback,
     ConfirmJudgeRegistrationCallback
 )
 
-from ...core.enums import Role
-from ...core.domain import Judge
-from ...core.services import CRUDService
-from ...core.exceptions import CreationError, UploadingFileError
+from src.drift_bot.core.enums import Role, FileType
+from src.drift_bot.core.domain import Judge
+from src.drift_bot.core.services import CRUDService
+from src.drift_bot.core.exceptions import CreationError, UploadingFileError
 
-from ...templates import JUDGE_TEMPLATE
-from ...constants import CRITERION2TEXT, JUDGES_BUCKET
+from src.drift_bot.templates import JUDGE_TEMPLATE
+from src.drift_bot.constants import CRITERION2TEXT, JUDGES_BUCKET
 
 logger = logging.getLogger(__name__)
 
-judges_router = Router(name=__name__)
+registration_form_router = Router(name=__name__)
 
 JUDGE_REQUIRED_MESSAGE = "⛔ Этот функционал доступен только для судей!"
 
 
-@judges_router.callback_query(JudgeRegistrationCallback)
+@registration_form_router.callback_query(JudgeRegistrationCallback)
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)
 @show_progress_bar(JudgeForm)
 async def send_judge_registration_form(
@@ -46,7 +49,7 @@ async def send_judge_registration_form(
     await call.message.answer("Введите своё ФИО: ")
 
 
-@judges_router.message(JudgeForm.full_name)
+@registration_form_router.message(JudgeForm.full_name)
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)
 @show_progress_bar(JudgeForm)
 async def enter_judge_full_name(message: Message, state: FSMContext) -> None:
@@ -55,16 +58,25 @@ async def enter_judge_full_name(message: Message, state: FSMContext) -> None:
     await message.answer("Прикрепите фото (или нажмите /skip чтобы пропустить): ")
 
 
-@judges_router.message(JudgeForm.photo_id, F.photo)
+@registration_form_router.message(JudgeForm.photo_id, FileFilter(FileType.PHOTO))
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)
 @show_progress_bar(JudgeForm)
-async def attach_judge_photo(message: Message, state: FSMContext) -> None:
-    await state.update_data(photo_id=message.photo[-1].file_id)
+async def attach_judge_photo(
+        message: Message,
+        state: FSMContext,
+        file_id: Optional[str] = None,
+        skip: bool = False
+) -> None:
+    if not skip:
+        await state.update_data(photo_id=file_id)
     await state.set_state(JudgeForm.criterion)
-    await message.answer(text="Выберите оцениваемый критерий ⬇️", reply_markup=choose_criterion_kb())
+    await message.answer(
+        text="Выберите оцениваемый критерий ⬇️",
+        reply_markup=choose_criterion_kb()
+    )
 
 
-@judges_router.callback_query(CriterionChoiceCallback)
+@registration_form_router.callback_query(CriterionChoiceCallback.filter())
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)
 @show_progress_bar(JudgeForm)
 async def choose_judge_criterion(
@@ -74,19 +86,22 @@ async def choose_judge_criterion(
 ) -> None:
     await state.update_data(criterion=callback_data.criterion)
     data = await state.get_data()
-    await call.message.answer(
-        text=JUDGE_TEMPLATE.format(
-            full_name=data["full_name"],
-            criterion=CRITERION2TEXT[data["criterion"]]
-        )
+    photo = data.get("photo_id")
+    text = JUDGE_TEMPLATE.format(
+        full_name=data["full_name"],
+        criterion=CRITERION2TEXT[data["criterion"]]
     )
+    if photo:
+        await call.message.answer_photo(photo=photo, caption=text)
+    else:
+        await call.message.answer(text=text)
     await call.message.answer(
         text="Подтвердите регистрацию",
         reply_markup=confirm_kb(ConfirmJudgeRegistrationCallback)
     )
 
 
-@judges_router.callback_query(
+@registration_form_router.callback_query(
     ConfirmJudgeRegistrationCallback.filter(F.confirmation == Confirmation.NO)
 )
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)
@@ -95,7 +110,7 @@ async def cancel_judge_registration(call: CallbackQuery, state: FSMContext) -> N
     await call.message.answer("❌ Регистрация отменена.")
 
 
-@judges_router.callback_query(
+@registration_form_router.callback_query(
     ConfirmJudgeRegistrationCallback.filter(F.confirmation == Confirmation.YES)
 )
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)

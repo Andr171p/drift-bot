@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 from datetime import datetime
 
@@ -10,16 +12,15 @@ from dishka.integrations.aiogram import FromDishka as Depends
 from ...utils import get_file
 from ...states import StageForm
 from ...filters import FileFilter
-from ...types import FilteredFile
 from ...enums import AdminChampionshipAction, Confirmation
 from ...decorators import role_required, show_progress_bar
 from ...keyboards import numeric_kb, confirm_kb, admin_stage_actions_kb
 from ...callbacks import AdminChampionshipActionCallback, ConfirmStageCreationCallback
 
-from src.drift_bot.core.base import CRUDRepository
-from src.drift_bot.core.services import CRUDService
+from src.drift_bot.core.domain import Stage, File
 from src.drift_bot.core.enums import Role, FileType
-from src.drift_bot.core.domain import Championship, Stage, File
+from src.drift_bot.core.services import CRUDService
+from src.drift_bot.core.base import ChampionshipRepository
 from src.drift_bot.core.exceptions import CreationError, UploadingFileError
 
 from src.drift_bot.templates import STAGE_TEMPLATE
@@ -40,7 +41,7 @@ async def send_stage_form(
         call: CallbackQuery,
         callback_data: AdminChampionshipActionCallback,
         state: FSMContext,
-        championship_repository: Depends[CRUDRepository[Championship]]
+        championship_repository: Depends[ChampionshipRepository]
 ) -> None:
     await state.set_state(StageForm.championship_id)
     await state.update_data(championship_id=callback_data.id)
@@ -77,7 +78,7 @@ async def enter_stage_title(message: Message, state: FSMContext) -> None:
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 @show_progress_bar(StageForm)
 async def enter_stage_description(message: Message, state: FSMContext) -> None:
-    await state.update_data(desciprion=message.text)
+    await state.update_data(description=message.text)
     await state.set_state(StageForm.photo_id)
     await message.answer("Прикрепите фото (или нажмите /skip чтобы пропустить): ")
 
@@ -85,9 +86,14 @@ async def enter_stage_description(message: Message, state: FSMContext) -> None:
 @stage_form_router.message(StageForm.photo_id, FileFilter(FileType.PHOTO))
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 @show_progress_bar(StageForm)
-async def attach_stage_photo(message: Message, state: FSMContext, filtered_file: FilteredFile) -> None:
-    if not filtered_file["skip"]:
-        await state.update_data(photo_id=filtered_file["file_id"])
+async def attach_stage_photo(
+        message: Message,
+        state: FSMContext,
+        file_id: Optional[str] = None,
+        skip: bool = False
+) -> None:
+    if not skip:
+        await state.update_data(photo_id=file_id)
     await state.set_state(StageForm.location)
     await message.answer("Укажите место проведения: ")
 
@@ -137,7 +143,9 @@ async def enter_stage_date(message: Message, state: FSMContext) -> None:
     )
 
 
-@stage_form_router.callback_query(ConfirmStageCreationCallback.filter(F.confirmation == Confirmation.NO))
+@stage_form_router.callback_query(
+    ConfirmStageCreationCallback.filter(F.confirmation == Confirmation.NO)
+)
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
 async def cancel_stage_creation(call: CallbackQuery, state: FSMContext) -> None:
     await state.clear()

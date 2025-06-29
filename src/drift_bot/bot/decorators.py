@@ -20,7 +20,7 @@ from ..core.enums import Role
 from ..core.domain import User
 from ..core.base import CRUDRepository
 from ..core.services import ReferralService
-from ..core.exceptions import CreationError, CodeExpiredError
+from ..core.exceptions import CreationError, UpdateError, CodeExpiredError
 
 WIDTH = 10  # Ширина прогресс бара
 
@@ -58,6 +58,14 @@ def save_user(role: Role) -> Callable[[MessageHandler[P, R]], MessageHandler[P, 
         async def wrapper(message: Message, *args, **kwargs) -> R | None:
             async with container(scope=Scope.REQUEST) as request_container:
                 user_repository = await request_container.get(CRUDRepository[User])
+                existed_user = await user_repository.read(message.from_user.id)
+                if existed_user:
+                    try:
+                        await user_repository.update(message.from_user.id, role=role)
+                    except UpdateError as e:
+                        logger.error(f"Error while user updating: {e}")
+                        await message.answer("⚠️ Произошла ошибка, попробуйте позже. Приносим свои извинения.")
+                    return await func(message, *args, **kwargs)
                 user = User(
                     user_id=message.from_user.id,
                     username=message.from_user.username,

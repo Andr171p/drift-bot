@@ -17,12 +17,12 @@ from src.drift_bot.core.exceptions import CreationError, DeletionError, Removing
 
 logger = logging.getLogger(name=__name__)
 
-stage_admin_actions_router = Router(name=__name__)
+stage_actions_router = Router(name=__name__)
 
 ADMIN_REQUIRED_MESSAGE = "⛔ Управлять этапами может только администратор!"
 
 
-@stage_admin_actions_router.callback_query(
+@stage_actions_router.callback_query(
     AdminStageActionCallback.filter(F.action == AdminStageAction.INVITE_JUDGE)
 )
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
@@ -43,7 +43,7 @@ async def invite_judge_to_stage(
         await call.message.answer("⚠️ Ошибка при создании ссылки!")
 
 
-@stage_admin_actions_router.callback_query(
+@stage_actions_router.callback_query(
     AdminStageActionCallback.filter(F.action == AdminStageAction.DELETE)
 )
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)
@@ -63,7 +63,7 @@ async def remove_stage(
         await call.message.answer("⚠️ Ошибка при удалении этапа!")
 
 
-@stage_admin_actions_router.callback_query(
+@stage_actions_router.callback_query(
     AdminStageActionCallback.filter(F.action == AdminStageAction.TOGGLE_REGISTRATION)
 )
 @role_required(Role.ADMIN, error_message=ADMIN_REQUIRED_MESSAGE)

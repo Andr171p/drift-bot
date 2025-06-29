@@ -26,8 +26,8 @@ class AdminStageAction(StrEnum):
 
 
 class CalendarAction(StrEnum):
-    PREVIOUS = "PREVIOUS"
-    NEXT = "NEXT"
-    TODAY = "TODAY"
-    IGNORE = "IGNORE"
-    DAY = "DAY"
+    PREVIOUS = "previous"
+    NEXT = "next"
+    TODAY = "today"
+    IGNORE = "ignore"
+    DAY = "day"

@@ -99,9 +99,10 @@ class SQLChampionshipRepository(ChampionshipRepository):
 
     async def get_active(self) -> list[ActiveChampionship]:
         try:
+            is_active = True
             stmt = (
                 select(ChampionshipOrm)
-                .where(ChampionshipOrm.is_active is True)
+                .where(ChampionshipOrm.is_active == is_active)
             )
             results = await self.session.execute(stmt)
             active_championships = results.scalars().all()
@@ -116,7 +117,7 @@ class SQLChampionshipRepository(ChampionshipRepository):
     async def paginate(self, page: int, limit: int, is_active: bool = True) -> list[Championship]:
         try:
             offset = (page - 1) * limit
-            stmt = select(ChampionshipOrm)
+            stmt = select(ChampionshipOrm).options(selectinload(ChampionshipOrm.files))
             if is_active:
                 stmt = stmt.where(ChampionshipOrm.is_active == is_active)
             stmt = stmt.offset(offset).limit(limit)

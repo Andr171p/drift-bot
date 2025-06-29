@@ -6,9 +6,9 @@ from aiogram.types import Message, CallbackQuery, BufferedInputFile
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
-from ...enums import ChampionshipAction, CalendarAction
-from ...keyboards import paginate_championships_kb, championship_actions_kb, CalendarKeyboard
-from ...callbacks import (
+from ..enums import ChampionshipAction, CalendarAction
+from ..keyboards import paginate_championships_kb, championship_actions_kb, CalendarKeyboard
+from ..callbacks import (
     ChampionshipPageCallback,
     ChampionshipCallback,
     ChampionshipActionCallback,
@@ -25,10 +25,10 @@ from src.drift_bot.templates import CHAMPIONSHIP_TEMPLATE
 PAGE, LIMIT = 1, 3
 DEFAULT_DAY = 1
 
-championship_menu_router = Router(name=__name__)
+championships_router = Router(name=__name__)
 
 
-@championship_menu_router.message(Command("championships"))
+@championships_router.message(Command("championships"))
 async def send_start_championships_menu(
         message: Message,
         championship_repository: Depends[ChampionshipRepository]
@@ -36,7 +36,7 @@ async def send_start_championships_menu(
     championships = await championship_repository.paginate(page=PAGE, limit=LIMIT)
     total = await championship_repository.count()
     await message.answer(
-        text="Доступные чемпионаты ⬇️",
+        text="Доступные чемпионаты 🏆",
         reply_markup=paginate_championships_kb(
             page=PAGE,
             total=total,
@@ -45,7 +45,7 @@ async def send_start_championships_menu(
     )
 
 
-@championship_menu_router.callback_query(ChampionshipPageCallback)
+@championships_router.callback_query(ChampionshipPageCallback.filter())
 async def send_next_championship_menu(
         call: CallbackQuery,
         callback_data: ChampionshipPageCallback,
@@ -54,8 +54,7 @@ async def send_next_championship_menu(
     page = callback_data.page
     championships = await championship_repository.paginate(page=page, limit=LIMIT)
     total = await championship_repository.count()
-    await call.message.answer(
-        text="Доступные чемпионаты ⬇️",
+    await call.message.edit_reply_markup(
         reply_markup=paginate_championships_kb(
             page=page,
             total=total,
@@ -64,7 +63,7 @@ async def send_next_championship_menu(
     )
 
 
-@championship_menu_router.callback_query(ChampionshipCallback)
+@championships_router.callback_query(ChampionshipCallback.filter())
 async def choose_championship(
         call: CallbackQuery,
         callback_data: ChampionshipCallback,
@@ -88,7 +87,7 @@ async def choose_championship(
         await call.message.answer(text=text, reply_markup=keyboard)
 
 
-@championship_menu_router.callback_query(
+@championships_router.callback_query(
     ChampionshipActionCallback.filter(F.action == ChampionshipAction.READ_REGULATIONS)
 )
 async def send_championship_regulations(
@@ -106,7 +105,7 @@ async def send_championship_regulations(
         )
 
 
-@championship_menu_router.callback_query(
+@championships_router.callback_query(
     ChampionshipActionCallback.filter(F.action == ChampionshipAction.STAGES_SCHEDULE)
 )
 async def send_stages_schedule_of_championship(
@@ -120,7 +119,7 @@ async def send_stages_schedule_of_championship(
     await call.message.answer(text="📅 Расписание этапов", reply_markup=calendar_kb())
 
 
-@championship_menu_router.callback_query(CalendarActionCallback.filter(F.action == CalendarAction.NEXT))
+@championships_router.callback_query(CalendarActionCallback.filter(F.action == CalendarAction.NEXT))
 async def send_next_stage_schedule_of_championship(
         call: CallbackQuery,
         callback_date: CalendarActionCallback,

@@ -8,7 +8,7 @@ CHAMPIONSHIP_TEMPLATE = """<b><u>Информация о чемпионате �
 #championship #drift
 """
 
-STAGE_TEMPLATE = """<b><u>Информация о этапе 🏁<u></b>
+STAGE_TEMPLATE = """<b><u>Информация о этапе 🏁</u></b>
 
 📌 <b>Название:</b> {title}
 📝 <b>Описание:</b> {description}

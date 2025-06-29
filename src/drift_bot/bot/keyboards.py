@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from datetime import datetime, timedelta
 
@@ -16,7 +16,6 @@ from .enums import (
 )
 from .callbacks import (
     StartCallback,
-    ConfirmCallback,
     CriterionChoiceCallback,
     AdminChampionshipActionCallback,
     AdminStageActionCallback,
@@ -24,7 +23,11 @@ from .callbacks import (
     ChampionshipCallback,
     ChampionshipPageCallback,
     ChampionshipActionCallback,
-    CalendarActionCallback
+    CalendarActionCallback,
+    ConfirmChampionshipCreationCallback,
+    ConfirmJudgeRegistrationCallback,
+    ConfirmStageDeletionCallback,
+    ConfirmStageCreationCallback
 )
 
 from ..core.enums import Role
@@ -33,6 +36,13 @@ from ..constants import CRITERION2TEXT, MONTH_NAMES, WEEKDAY_NAMES
 
 WEEK_LENGTH = 7  # Длина недели
 MONTHS = 12      # Количество месяцев в году
+
+ConfirmCallback = Union[
+    ConfirmChampionshipCreationCallback,
+    ConfirmJudgeRegistrationCallback,
+    ConfirmStageCreationCallback,
+    ConfirmStageDeletionCallback,
+]
 
 
 def start_keyboard() -> InlineKeyboardMarkup:
@@ -113,7 +123,7 @@ def admin_stage_actions_kb(id: int, is_active: bool) -> InlineKeyboardMarkup:
         callback_data=AdminStageActionCallback(
             id=id,
             action=AdminStageAction.INVITE_JUDGE
-        )
+        ).pack()
     )
     builder.adjust(1)
     return builder.as_markup()
@@ -125,7 +135,7 @@ def choose_criterion_kb() -> InlineKeyboardMarkup:
     for criterion in CRITERION2TEXT.keys():
         builder.button(
             text=CRITERION2TEXT[criterion],
-            callback_data=CriterionChoiceCallback(criterion=criterion)
+            callback_data=CriterionChoiceCallback(criterion=criterion).pack()
         )
     return builder.as_markup()
 
@@ -160,13 +170,13 @@ def paginate_championships_kb(
             text=f"{championship.title}",
             callback_data=ChampionshipCallback(id=championship.id).pack()
         )
-    builder.adjust(1)
     if page > 1:
         previous_page = page - 1
         builder.button(text="⬅️", callback_data=ChampionshipPageCallback(page=previous_page).pack())
     if page < total:
         next_page = page + 1
         builder.button(text="➡️", callback_data=ChampionshipPageCallback(page=next_page).pack())
+    builder.adjust(1)
     return builder.as_markup()
 
 
@@ -269,7 +279,7 @@ class CalendarKeyboard:
                 year=year,
                 month=month,
                 day=day
-            )
+            ).pack()
         )
 
     def __call__(self) -> InlineKeyboardMarkup:
@@ -317,7 +327,7 @@ class CalendarKeyboard:
                 text="➡️",
                 callback_data=CalendarActionCallback(
                     action=CalendarAction.NEXT, year=next_year, month=next_month
-                )
+                ).pack()
             )
         )
         return builder.as_markup()
