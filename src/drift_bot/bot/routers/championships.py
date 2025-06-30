@@ -6,12 +6,9 @@ from aiogram.types import Message, CallbackQuery, BufferedInputFile
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
+from ..calendar_kb import CalendarKeyboard
 from ..enums import ChampionshipAction, CalendarAction
-from ..keyboards import (
-    paginate_championships_kb,
-    championship_actions_kb,
-    CalendarKeyboard,
-)
+from ..keyboards import paginate_championships_kb, championship_actions_kb
 from ..callbacks import (
     ChampionshipActionCallback,
     ChampionshipPageCallback,
@@ -120,7 +117,13 @@ async def send_stages_schedule_of_championship(
 ) -> None:
     stages = await championship_repository.get_stages(callback_data.id)
     dates = [stage.date for stage in stages]
-    calendar_kb = CalendarKeyboard(marked_dates=dates, mark_label="🏁")
+    today = datetime.now()
+    calendar_kb = CalendarKeyboard(
+        year=today.year,
+        month=today.month,
+        marked_dates=dates,
+        mark_label="🏁"
+    )
     await call.message.answer(text="📅 Расписание этапов", reply_markup=calendar_kb())
 
 
@@ -133,7 +136,7 @@ async def send_next_stage_schedule_of_championship(
         championship_repository: Depends[ChampionshipRepository]
 ) -> None:
     date = datetime(year=callback_data.year, month=callback_data.month, day=DEFAULT_DAY)
-    calendar_kb = CalendarKeyboard(current_date=date)
+    # calendar_kb = CalendarKeyboard()
 
 
 @championships_router.callback_query(
