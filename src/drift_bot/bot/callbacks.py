@@ -50,11 +50,6 @@ class AdminStageActionCallback(CallbackData, prefix="admin_stage_action"):
     action: AdminStageAction
 
 
-class JudgeRegistrationCallback(CallbackData, prefix="judge_registration"):
-    """Регистрация судьи на этап."""
-    stage_id: int
-
-
 class CriterionChoiceCallback(CallbackData, prefix="criterion_choice"):
     """Выбор судейского критерия."""
     criterion: Criterion
@@ -80,11 +75,11 @@ class StageCalendarCallback(CalendarCallback):
 
 class JudgeStageActionCallback(CallbackData, prefix="judge_stage_action"):
     """Действия судьи для взаимодействия с этапом."""
-    stage_id: int
+    id: int
     action: JudgeStageAction
 
 
 class PilotStageActionCallback(CallbackData, prefix="pilot_stage_action"):
     """Действия пилота для взаимодействия с этапом."""
-    stage_id: int
+    id: int
     action: PilotStageAction

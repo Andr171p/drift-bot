@@ -37,14 +37,13 @@ def get_form_fields(form: StatesGroup) -> list[str]:
 
 def get_stage_actions_kb_by_role(role: Role, stage: Stage) -> InlineKeyboardMarkup:
     """Получает клавиатуру с набором действия по роли пользователя."""
-    params = stage.model_dump()
     keyboard: InlineKeyboardMarkup = None
     match role:
         case role.ADMIN:
-            keyboard = admin_stage_actions_kb(**params)
+            keyboard = admin_stage_actions_kb(stage_id=stage.id, is_active=stage.is_active)
         case role.JUDGE:
-            keyboard = judge_stage_actions_kb(**params)
+            keyboard = judge_stage_actions_kb(stage_id=stage.id)
         case role.PILOT:
-            keyboard = pilot_stage_actions_kb(**params)
+            keyboard = pilot_stage_actions_kb(stage_id=stage.id)
     return keyboard
 

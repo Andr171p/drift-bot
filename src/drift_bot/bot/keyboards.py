@@ -18,7 +18,6 @@ from .callbacks import (
     CriterionChoiceCallback,
     AdminChampionshipActionCallback,
     AdminStageActionCallback,
-    JudgeRegistrationCallback,
     ChampionshipCallback,
     ChampionshipPageCallback,
     ChampionshipActionCallback,
@@ -70,27 +69,27 @@ def confirm_kb(callback: type[ConfirmCallback]) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def admin_championship_actions_kb(id: int, is_active: bool) -> InlineKeyboardMarkup:
+def admin_championship_actions_kb(championship_id: int, is_active: bool) -> InlineKeyboardMarkup:
     """Клавиатура администратора для взаимодействия с чемпионатом."""
     builder = InlineKeyboardBuilder()
     builder.button(
         text="🗑️ Удалить",
         callback_data=AdminChampionshipActionCallback(
-            id=id,
+            id=championship_id,
             action=AdminChampionshipAction.DELETE
         ).pack()
     )
     builder.button(
         text="➕ Добавить этап",
         callback_data=AdminChampionshipActionCallback(
-            id=id,
+            id=championship_id,
             action=AdminChampionshipAction.ADD_STAGE
         ).pack()
     )
     builder.button(
         text="🟢 Сделать активным" if not is_active else "🔴 Закрыть",
         callback_data=AdminChampionshipActionCallback(
-            id=id,
+            id=championship_id,
             action=AdminChampionshipAction.TOGGLE_ACTIVATION
         ).pack()
     )
@@ -98,27 +97,27 @@ def admin_championship_actions_kb(id: int, is_active: bool) -> InlineKeyboardMar
     return builder.as_markup()
 
 
-def admin_stage_actions_kb(id: int, is_active: bool) -> InlineKeyboardMarkup:
+def admin_stage_actions_kb(stage_id: int, is_active: bool) -> InlineKeyboardMarkup:
     """Клавиатура для взаимодействия с этапом чемпионата."""
     builder = InlineKeyboardBuilder()
     builder.button(
         text="🗑️ Удалить",
         callback_data=AdminStageActionCallback(
-            id=id,
+            id=stage_id,
             action=AdminStageAction.DELETE
         ).pack()
     )
     builder.button(
         text="🔓 Открыть регистрацию" if not is_active else "🔐 Закрыть регистрацию",
         callback_data=AdminStageActionCallback(
-            id=id,
+            id=stage_id,
             action=AdminStageAction.TOGGLE_REGISTRATION
         ).pack()
     )
     builder.button(
         text="📨 Пригласить судью",
         callback_data=AdminStageActionCallback(
-            id=id,
+            id=stage_id,
             action=AdminStageAction.INVITE_JUDGE
         ).pack()
     )
@@ -149,8 +148,11 @@ def judge_registration_kb(stage_id: int) -> InlineKeyboardMarkup:
     """Клавиатура для начала процедуры регистрации судьи на этап."""
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="📝 Начать регистрацию",
-        callback_data=JudgeRegistrationCallback(stage_id=stage_id).pack()
+        text="📝 Зарегистрироваться",
+        callback_data=JudgeStageActionCallback(
+            id=stage_id,
+            action=JudgeStageAction.REGISTRATION
+        ).pack()
     )
     return builder.as_markup()
 
@@ -185,32 +187,38 @@ def paginate_championships_kb(
     return builder.as_markup()
 
 
-def championship_actions_kb(id: int) -> InlineKeyboardMarkup:
+def championship_actions_kb(championship_id: int) -> InlineKeyboardMarkup:
     """Клавиатура для взаимодействия с чемпионатом."""
     builder = InlineKeyboardBuilder()
     builder.button(
         text="📅 Расписание этапов",
-        callback_data=ChampionshipActionCallback(id=id, action=ChampionshipAction.STAGES_SCHEDULE).pack()
+        callback_data=ChampionshipActionCallback(
+            id=championship_id,
+            action=ChampionshipAction.STAGES_SCHEDULE).pack()
     )
     builder.button(
         text="🔜 Ближайший этап",
-        callback_data=ChampionshipActionCallback(id=id, action=ChampionshipAction.NEAREST_STAGE).pack()
+        callback_data=ChampionshipActionCallback(
+            id=championship_id,
+            action=ChampionshipAction.NEAREST_STAGE).pack()
     )
     builder.button(
         text="📄 Ознакомится с регламентом",
-        callback_data=ChampionshipActionCallback(id=id, action=ChampionshipAction.READ_REGULATIONS).pack()
+        callback_data=ChampionshipActionCallback(
+            id=championship_id,
+            action=ChampionshipAction.READ_REGULATIONS).pack()
     )
     builder.adjust(1)
     return builder.as_markup()
 
 
-def judge_stage_actions_kb(id: int) -> InlineKeyboardMarkup:
+def judge_stage_actions_kb(stage_id: int) -> InlineKeyboardMarkup:
     """Клавиатура для взаимодействия судьи с этапом чемпионата."""
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="Регистрация",
+        text="📝 Зарегистрироваться",
         callback_data=JudgeStageActionCallback(
-            stage_id=id,
+            id=stage_id,
             action=JudgeStageAction.REGISTRATION
         ).pack()
     )
@@ -218,13 +226,13 @@ def judge_stage_actions_kb(id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def pilot_stage_actions_kb(id: int) -> InlineKeyboardMarkup:
+def pilot_stage_actions_kb(stage_id: int) -> InlineKeyboardMarkup:
     """Клавиатура для взаимодействия пилота с этапом чемпионата."""
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="Регистрация",
+        text="📝 Зарегистрироваться",
         callback_data=PilotStageActionCallback(
-            stage_id=id,
+            id=stage_id,
             action=PilotStageAction.REGISTRATION
         )
     )

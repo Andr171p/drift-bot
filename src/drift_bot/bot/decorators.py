@@ -90,7 +90,7 @@ def show_progress_bar(
 
         :param form: FSM форма для заполнения данных
         :param width: Ширина прогресс-бара в символах
-        """
+    """
     def decorator(handler: MessageHandler[P, R]) -> MessageHandler[P, R | None]:
         @wraps(handler)
         async def wrapper(update: Message | CallbackQuery, state: FSMContext, *args,  **kwargs) -> R | None:
