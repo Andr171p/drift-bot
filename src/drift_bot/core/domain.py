@@ -2,9 +2,9 @@ from typing import Optional, Literal
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, model_validator, Field
+from pydantic import BaseModel, ConfigDict, model_validator, Field, field_validator
 
-from .enums import Role, Criterion, CarType, FileType
+from .enums import Role, Criterion, CarType, FileType, QualificationAttempt
 
 from ..constants import (
     BOT_URL,
@@ -119,36 +119,39 @@ class Stage(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Judge(BaseModel):
+class Participant(BaseModel):
     user_id: int                                                       # ID пользователя
-    stage_id: int                                                      # ID этапа на котором работает судья
-    full_name: str                                                     # ФИО судьи
+    stage_id: int                                                      # ID этапа
+    full_name: str                                                     # ФИО участника
     files: list[Optional[FileMetadata]] = Field(default_factory=list)  # Прикреплённые файлы
-    criterion: Criterion                                               # Оцениваемый критерий
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class Pilot(BaseModel):
-    user_id: int                                                       # ID пользователя
-    stage_id: int                                                      # ID этапа в котором принимает участие пилот
-    full_name: str                                                     # ФИО пилота
-    age: int                                                           # Возраст пилота
-    description: str                                                   # Описание пилота (о нём и его машине, полезная информация для комментатора)
-    team: Optional[str] = None                                         # Название команды, если пилот выступает в командном зачёте
-    files: list[Optional[FileMetadata]] = Field(default_factory=list)  # Фото пилота или его авто
-    drift_car: Car                                                     # Авто на котором пилот принимает участие
-    technical_car: Optional[Car] = None                                # Технический авто для тех-парка
-    number: int                                                        # Номер пилота получаемый при регистрации
+class Judge(Participant):
+    criterion: Criterion  # Оцениваемый критерий
 
-    model_config = ConfigDict(from_attributes=True)
+
+class Pilot(Participant):
+    age: int                    # Возраст пилота
+    description: str            # Описание пилота (о нём и его машине, полезная информация для комментатора)
+    team: Optional[str] = None  # Название команды, если пилот выступает в командном зачёте
+    cars: list[Car]             # Технический авто для тех-парка
+    number: int                 # Номер пилота получаемый при регистрации
+
+    @field_validator("cars")
+    def check_drift_car(self, cars: list[Car]) -> list[Car]:
+        drift_car = next((car for car in cars if car.type == CarType.DRIFT), None)
+        if not drift_car:
+            raise ValueError("Drift car fill required")
+        return cars
 
 
 class Qualification(BaseModel):
-    stage_id: int      # ID этапа
-    pilot_number: int  # Номер пилота
-    attempt: ATTEMPT   # Попытка
-    points: float      # Количество баллов
+    stage_id: int                  # ID этапа
+    pilot_number: int              # Номер пилота
+    attempt: QualificationAttempt  # Попытка
+    points: float                  # Количество баллов
 
     model_config = ConfigDict(from_attributes=True)
 

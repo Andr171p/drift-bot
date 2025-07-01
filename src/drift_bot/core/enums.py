@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import StrEnum, IntEnum, auto
 
 
 class Role(StrEnum):
@@ -26,3 +26,9 @@ class FileType(StrEnum):
     """Тип файла"""
     PHOTO = "PHOTO"
     DOCUMENT = "DOCUMENT"
+
+
+class QualificationAttempt(IntEnum):
+    """Квалификационная попытка"""
+    first = auto()
+    second = auto()

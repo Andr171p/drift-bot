@@ -3,10 +3,12 @@ from typing import Generic, TypeVar, Optional, Any
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from .domain import Judge, Pilot, Stage, Championship
+from pydantic import BaseModel
+
+from .domain import Stage, Championship
 from .dto import ActiveChampionship
 
-T = TypeVar("T")
+T = TypeVar("T", bound=BaseModel)
 
 
 class CRUDRepository(Generic[T]):

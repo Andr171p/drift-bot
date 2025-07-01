@@ -212,7 +212,7 @@ def championship_actions_kb(championship_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def judge_stage_actions_kb(stage_id: int, is_registered: bool) -> InlineKeyboardMarkup:
+def judge_stage_actions_kb(stage_id: int) -> InlineKeyboardMarkup:
     """Клавиатура для взаимодействия судьи с этапом чемпионата."""
     builder = InlineKeyboardBuilder()
     builder.button(

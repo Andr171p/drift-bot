@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Text, DateTime, BigInteger, CheckConstraint, ForeignKey
+from sqlalchemy import Text, DateTime, BigInteger, CheckConstraint, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -18,6 +18,7 @@ class UserOrm(Base):
             "role IN ('ADMIN', 'JUDGE', 'PILOT', 'DEVELOPER')",
             "check_user_role"
         ),
+        Index("user_id_index", "user_id"),
     )
 
 
@@ -98,32 +99,45 @@ class StageOrm(Base):
         lazy="select"
     )
 
-    judges: Mapped[list["JudgeOrm"]] = relationship(
-        back_populates="stage",
-        cascade="all, delete-orphan"
-    )
-    pilots: Mapped[list["PilotOrm"]] = relationship(
+    participants: Mapped[list["ParticipantOrm"]] = relationship(
         back_populates="stage",
         cascade="all, delete-orphan"
     )
     championship: Mapped["ChampionshipOrm"] = relationship(back_populates="stages")
 
 
-class JudgeOrm(Base):
-    __tablename__ = "judges"
+class ParticipantOrm(Base):
+    __tablename__ = "participants"
 
     user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
     stage_id: Mapped[int] = mapped_column(ForeignKey("stages.id"), unique=False)
     full_name: Mapped[str]
-    criterion: Mapped[str]
+
+    type: Mapped[str] = mapped_column(nullable=False)
 
     files: Mapped[list["FileMetadataOrm"]] = relationship(
-        primaryjoin="""and_(JudgeOrm.id == foreign(FileMetadataOrm.parent_id), 
-        FileMetadataOrm.parent_type == 'judge')""",
+        primaryjoin="""and_(
+            ParticipantOrm.id == foreign(FileMetadataOrm.parent_id),
+            FileMetadataOrm.parent_type == 'participant'
+        )""",
         cascade="all, delete-orphan"
     )
+    stage: Mapped["StageOrm"] = relationship(back_populates="participants")
 
-    stage: Mapped["StageOrm"] = relationship(back_populates="judges")
+    __mapper_args__ = {
+        "polymorphic_identity": "participant",
+        "polymorphic_on": type
+    }
+
+    __table_args__ = (
+        Index("user_stage_index", "user_id", "stage_id", unique=True),
+    )
+
+
+class JudgeOrm(ParticipantOrm):
+    __tablename__ = "judges"
+
+    criterion: Mapped[str]
 
     __table_args__ = (
         CheckConstraint("criterion IN ('STYLE', 'ANGLE', 'LINE')", "check_criterion"),
@@ -141,24 +155,14 @@ class CarOrm(Base):
     pilot: Mapped["PilotOrm"] = relationship(back_populates="cars")
 
 
-class PilotOrm(Base):
+class PilotOrm(ParticipantOrm):
     __tablename__ = "pilots"
 
-    user_id: Mapped[int] = mapped_column(BigInteger, unique=False, nullable=False)
-    stage_id: Mapped[int] = mapped_column(ForeignKey("stages.id"), unique=False, nullable=False)
-    full_name: Mapped[str]
     age: Mapped[int]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     cars: Mapped[list["CarOrm"]] = relationship(back_populates="pilot")
     number: Mapped[int]
 
-    files: Mapped[list["FileMetadataOrm"]] = relationship(
-        primaryjoin="""and_(PilotOrm.id == foreign(FileMetadataOrm.parent_id), 
-        FileMetadataOrm.parent_type == 'pilot')""",
-        cascade="all, delete-orphan"
-    )
-
-    stage: Mapped["StageOrm"] = relationship(back_populates="pilots")
     qualifications: Mapped[list["QualificationOrm"]] = relationship(back_populates="pilot")
 
 
