@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Optional, Any
+from typing import Generic, TypeVar, Optional, Any, Protocol
 
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from .domain import Stage, Championship
 from .dto import ActiveChampionship
+
 
 T = TypeVar("T", bound=BaseModel)
 

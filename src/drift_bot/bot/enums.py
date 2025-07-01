@@ -27,7 +27,9 @@ class AdminStageAction(StrEnum):
 
 class JudgeStageAction(StrEnum):
     REGISTRATION = "registration"  # Регистрация на этап
+    QUIT = "quit"                  # Покинуть этап
 
 
 class PilotStageAction(StrEnum):
     REGISTRATION = "registration"  # Регистрация на этап
+    QUIT = "quit"                  # Покинуть этап

@@ -1,5 +1,9 @@
-from src.drift_bot.bot.keyboards import CalendarKeyboard
+from pydantic import BaseModel
 
-calendar = CalendarKeyboard()
 
-print(calendar._get_month_days(year=2025, month=6))
+class Test(BaseModel):
+    id: int
+    files: list[int]
+
+
+print(getattr(Test(id=1, files=[1, 2, 3]), "files"))

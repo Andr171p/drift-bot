@@ -22,12 +22,12 @@ P = TypeVar("P", bound=ParticipantOrm)
 class SQLParticipantRepository(ParticipantRepository[T], Generic[T, P]):
     def __init__(self, session: AsyncSession, orm: type[P], model: type[T]) -> None:
         self.session = session
-        self.orm = orm
-        self.model = model
+        self.Orm = orm
+        self.Model = model
 
     async def create(self, model: T) -> T:
         try:
-            orm = self.orm(**model.model_dump(exclude={"files"}, exclude_none=True))
+            orm = self.Orm(**model.model_dump(exclude={"files"}, exclude_none=True))
             self.session.add(orm)
             await self.session.flush()
             if model.files:
@@ -37,13 +37,13 @@ class SQLParticipantRepository(ParticipantRepository[T], Generic[T, P]):
             await self.session.commit()
             await self.session.refresh(orm)
             stmt = (
-                select(self.orm)
-                .where(self.orm.id == orm.id)
-                .options(selectinload(self.orm.files))
+                select(self.Orm)
+                .where(self.Orm.id == orm.id)
+                .options(selectinload(self.Orm.files))
             )
             result = await self.session.execute(stmt)
             orm = result.scalar_one()
-            return self.model.model_validate(orm)
+            return self.Model.model_validate(orm)
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise CreationError(f"Error while creation participant: {e}") from e
@@ -51,13 +51,13 @@ class SQLParticipantRepository(ParticipantRepository[T], Generic[T, P]):
     async def read(self, id: int) -> Optional[T]:
         try:
             stmt = (
-                select(self.orm)
-                .options(selectinload(self.orm.files))
-                .where(self.orm.id == id)
+                select(self.Orm)
+                .options(selectinload(self.Orm.files))
+                .where(self.Orm.id == id)
             )
             result = await self.session.execute(stmt)
             orm = result.scalar_one_or_none()
-            return self.model.model_validate(orm) if orm else None
+            return self.Model.model_validate(orm) if orm else None
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading participant: {e}") from e
@@ -72,9 +72,9 @@ class SQLParticipantRepository(ParticipantRepository[T], Generic[T, P]):
     async def delete(self, id: int) -> bool:
         try:
             stmt = (
-                delete(self.orm)
-                .options(selectinload(self.orm.files))
-                .where(self.orm.id == id)
+                delete(self.Orm)
+                .options(selectinload(self.Orm.files))
+                .where(self.Orm.id == id)
             )
             result = await self.session.execute(stmt)
             await self.session.commit()
@@ -86,16 +86,16 @@ class SQLParticipantRepository(ParticipantRepository[T], Generic[T, P]):
     async def get_by_user_and_stage(self, user_id: int, stage_id: int) -> Optional[T]:
         try:
             stmt = (
-                select(self.orm)
-                .options(selectinload(self.orm.files))
+                select(self.Orm)
+                .options(selectinload(self.Orm.files))
                 .where(
-                    (self.orm.user_id == user_id) &
-                    (self.orm.stage_id == stage_id)
+                    (self.Orm.user_id == user_id) &
+                    (self.Orm.stage_id == stage_id)
                 )
             )
             result = await self.session.execute(stmt)
             orm = result.scalar_one_or_none()
-            return self.model.model_validate(orm) if orm else None
+            return self.Model.model_validate(orm) if orm else None
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise ReadingError(f"Error while reading participant: {e}") from e

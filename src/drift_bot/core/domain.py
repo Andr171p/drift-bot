@@ -8,7 +8,6 @@ from .enums import Role, Criterion, CarType, FileType, QualificationAttempt
 
 from ..constants import (
     BOT_URL,
-    ATTEMPT,
     PHOTO_FORMATS,
     MAX_TITLE_LENGTH,
     MIN_STAGES_COUNT,
@@ -51,11 +50,13 @@ class File(BaseModel):
 
 
 class Car(BaseModel):
-    pilot_id: int                # ID пилота
-    type: CarType                # Тип авто
-    name: str                    # Название авто или его марка
-    plate: Optional[str] = None  # Гос номер авто
-    hp: Optional[int] = None     # Мощность в Л.С (лошадиные силы)
+    pilot_id: Optional[int] = None  # ID пилота
+    type: CarType                   # Тип авто
+    name: str                       # Название авто или его марка
+    plate: Optional[str] = None     # Гос номер авто
+    hp: Optional[int] = None        # Мощность в Л.С (лошадиные силы)
+
+    model_config = ConfigDict(from_attributes=True)
 
     @model_validator(mode="after")
     def check_is_plate_filled(self) -> "Car":

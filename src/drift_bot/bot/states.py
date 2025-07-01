@@ -23,17 +23,28 @@ class StageForm(StatesGroup):
 
 
 class JudgeForm(StatesGroup):
+    """Форма для регистрации судьи."""
     stage_id = State()   # ID Этапа
     full_name = State()  # ФИО
     photo_id = State()   # ID файла с фото (опционально)
     criterion = State()  # Оцениваемый критерий
 
 
+class CarForm(StatesGroup):
+    """Форма для регистрации автомобиля."""
+    type = State()
+    name = State()
+    plate = State()
+    hp = State()
+
+
 class PilotForm(StatesGroup):
-    event_id = State()
+    """Форма для регистрации пилота."""
+    stage_id = State()
     full_name = State()
     age = State()
     description = State()
     team = State()
-    file_id = State()
-    car = State()
+    cars = State()
+    photo_id = State()
+    number = State()

@@ -4,13 +4,12 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from ...states import PilotForm
+from ...states import PilotForm, CarForm
 from ...enums import PilotStageAction
 from ...callbacks import PilotStageActionCallback
 from ...decorators import role_required, show_progress_bar, check_participant_registration
 
 from src.drift_bot.core.enums import Role
-from src.drift_bot.core.base import ParticipantRepository
 
 logger = logging.getLogger(name=__name__)
 
