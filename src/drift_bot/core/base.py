@@ -36,6 +36,8 @@ class ChampionshipRepository(CRUDRepository[Championship]):
 class StageRepository(CRUDRepository[Stage]):
     async def get_nearest(self, championship_id: int, date: datetime) -> Optional[Stage]: pass
 
+    async def get_by_date(self, championship_id: int, date: datetime) -> Optional[Stage]: pass
+
 
 class PilotRepository(CRUDRepository[Pilot]):
     async def get_by_user_id(self, user_id: int) -> Optional[Pilot]: pass

@@ -1,6 +1,4 @@
-from typing import Optional, Union
-
-from datetime import datetime, timedelta
+from typing import Union
 
 from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
@@ -12,7 +10,8 @@ from .enums import (
     AdminChampionshipAction,
     AdminStageAction,
     ChampionshipAction,
-    CalendarAction
+    JudgeStageAction,
+    PilotStageAction
 )
 from .callbacks import (
     StartCallback,
@@ -23,19 +22,17 @@ from .callbacks import (
     ChampionshipCallback,
     ChampionshipPageCallback,
     ChampionshipActionCallback,
-    CalendarActionCallback,
     ConfirmChampionshipCreationCallback,
     ConfirmJudgeRegistrationCallback,
     ConfirmStageDeletionCallback,
-    ConfirmStageCreationCallback
+    ConfirmStageCreationCallback,
+    JudgeStageActionCallback,
+    PilotStageActionCallback
 )
 
 from ..core.enums import Role
 from ..core.domain import Championship
-from ..constants import CRITERION2TEXT, MONTH_NAMES, WEEKDAY_NAMES
-
-WEEK_LENGTH = 7  # Длина недели
-MONTHS = 12      # Количество месяцев в году
+from ..constants import CRITERION2TEXT
 
 ConfirmCallback = Union[
     ConfirmChampionshipCreationCallback,
@@ -170,12 +167,20 @@ def paginate_championships_kb(
             text=f"{championship.title}",
             callback_data=ChampionshipCallback(id=championship.id).pack()
         )
+    buttons: list[InlineKeyboardButton] = []
     if page > 1:
         previous_page = page - 1
-        builder.button(text="⬅️", callback_data=ChampionshipPageCallback(page=previous_page).pack())
+        buttons.append(InlineKeyboardButton(
+            text="⬅️",
+            callback_data=ChampionshipPageCallback(page=previous_page).pack()
+        ))
     if page < total:
         next_page = page + 1
-        builder.button(text="➡️", callback_data=ChampionshipPageCallback(page=next_page).pack())
+        buttons.append(InlineKeyboardButton(
+            text="➡️",
+            callback_data=ChampionshipPageCallback(page=next_page).pack()
+        ))
+    builder.row(*buttons)
     builder.adjust(1)
     return builder.as_markup()
 
@@ -194,6 +199,34 @@ def championship_actions_kb(id: int) -> InlineKeyboardMarkup:
     builder.button(
         text="📄 Ознакомится с регламентом",
         callback_data=ChampionshipActionCallback(id=id, action=ChampionshipAction.READ_REGULATIONS).pack()
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def judge_stage_actions_kb(id: int) -> InlineKeyboardMarkup:
+    """Клавиатура для взаимодействия судьи с этапом чемпионата."""
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Регистрация",
+        callback_data=JudgeStageActionCallback(
+            stage_id=id,
+            action=JudgeStageAction.REGISTRATION
+        ).pack()
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def pilot_stage_actions_kb(id: int) -> InlineKeyboardMarkup:
+    """Клавиатура для взаимодействия пилота с этапом чемпионата."""
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Регистрация",
+        callback_data=PilotStageActionCallback(
+            stage_id=id,
+            action=PilotStageAction.REGISTRATION
+        )
     )
     builder.adjust(1)
     return builder.as_markup()

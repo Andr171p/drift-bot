@@ -1,13 +1,13 @@
-from typing import Optional
-
 from aiogram.filters.callback_data import CallbackData
 
+from .calendar_kb import CalendarCallback
 from .enums import (
     Confirmation,
     AdminChampionshipAction,
     AdminStageAction,
     ChampionshipAction,
-    CalendarAction
+    JudgeStageAction,
+    PilotStageAction
 )
 
 from ..core.enums import Role, Criterion
@@ -73,9 +73,18 @@ class ChampionshipActionCallback(CallbackData, prefix="championship_action"):
     action: ChampionshipAction
 
 
-class CalendarActionCallback(CallbackData, prefix="calendar"):
-    action: CalendarAction
-    year: Optional[int] = None
-    month: Optional[int] = None
-    day: Optional[int] = None
-    payload: Optional[list] = None
+class StageCalendarCallback(CalendarCallback):
+    """Расписание этапов чемпионата."""
+    championship_id: int
+
+
+class JudgeStageActionCallback(CallbackData, prefix="judge_stage_action"):
+    """Действия судьи для взаимодействия с этапом."""
+    stage_id: int
+    action: JudgeStageAction
+
+
+class PilotStageActionCallback(CallbackData, prefix="pilot_stage_action"):
+    """Действия пилота для взаимодействия с этапом."""
+    stage_id: int
+    action: PilotStageAction

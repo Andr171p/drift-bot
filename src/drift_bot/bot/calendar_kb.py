@@ -44,21 +44,33 @@ class CalendarCallback(CallbackData, prefix="calendar"):
 
 
 class CalendarKeyboard:
-    def __init__(self, year: int, month: int, marked_dates: list[datetime], mark_label: str = "") -> None:
+    def __init__(
+            self,
+            year: int,
+            month: int,
+            marked_dates: list[datetime],
+            mark_label: str = "",
+            callback: type[CalendarCallback] = CalendarCallback,
+            **callback_kwargs
+    ) -> None:
         """
-                Инициализация календаря.
+            Инициализация календаря.
 
-                :param year: Год для отображения
-                :param month: Месяц для отображения (1-12)
-                :param marked_dates: Список дат для отметки
-                :param mark_label: Префикс для отмеченных дат
-                """
+            :param year: Год для отображения
+            :param month: Месяц для отображения (1-12)
+            :param marked_dates: Список дат для отметки
+            :param mark_label: Префикс для отмеченных дат
+            :param callback: Кастомный класс наследуемый от CalendarCallback
+            :param **callback_kwargs: Дополнительные данные передаваемые в кастомный класс
+        """
         self._year = year
         self._month = month
         self._marked_dates = marked_dates
         self._mark_label = mark_label
         self._month_days = calendar.monthcalendar(year, month)
         self._marked_days = self._mark_days()
+        self._callback = callback
+        self._callback_kwargs = callback_kwargs
 
     def _mark_days(self) -> set[int]:
         """Возвращает множество отмеченных дней для текущего месяца."""
@@ -79,20 +91,22 @@ class CalendarKeyboard:
 
     def _build_day_button(self, day: int) -> InlineKeyboardButton:
         """Создает кнопку для дня календаря."""
-        if day == 0:  # Пустой день (из другого месяца)
-            return InlineKeyboardButton(text=" ", callback_data=CalendarCallback(action=CalendarAction.IGNORE).pack())
-
+        if day == 0:
+            return InlineKeyboardButton(
+                text=" ",
+                callback_data=self._callback(action=CalendarAction.IGNORE, **self._callback_kwargs).pack()
+            )
         is_marked = day in self._marked_days
         text = f"{self._mark_label}{day}" if is_marked else str(day)
-
         return InlineKeyboardButton(
             text=text,
-            callback_data=CalendarCallback(
+            callback_data=self._callback(
                 year=self._year,
                 month=self._month,
                 day=day,
                 is_marked=is_marked,
-                action=CalendarAction.SELECT
+                action=CalendarAction.SELECT,
+                **self._callback_kwargs
             ).pack()
         )
 
@@ -119,10 +133,11 @@ class CalendarKeyboard:
         builder.row(
             InlineKeyboardButton(
                 text="⬅️",
-                callback_data=CalendarCallback(
+                callback_data=self._callback(
                     year=prev_year,
                     month=prev_month,
-                    action=CalendarAction.PREVIOUS
+                    action=CalendarAction.PREVIOUS,
+                    **self._callback_kwargs
                 ).pack()
             ),
             InlineKeyboardButton(
@@ -131,10 +146,11 @@ class CalendarKeyboard:
             ),
             InlineKeyboardButton(
                 text="➡️",
-                callback_data=CalendarCallback(
+                callback_data=self._callback(
                     year=next_year,
                     month=next_month,
-                    action=CalendarAction.NEXT
+                    action=CalendarAction.NEXT,
+                    **self._callback_kwargs
                 ).pack()
             )
         )

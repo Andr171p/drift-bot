@@ -6,20 +6,21 @@ from aiogram.types import Message, CallbackQuery, BufferedInputFile
 
 from dishka.integrations.aiogram import FromDishka as Depends
 
-from ..calendar_kb import CalendarKeyboard
-from ..enums import ChampionshipAction, CalendarAction
+from ..enums import ChampionshipAction
+from ..utils import get_stage_actions_kb_by_role
+from ..calendar_kb import CalendarKeyboard, CalendarCallback, CalendarAction
 from ..keyboards import paginate_championships_kb, championship_actions_kb
 from ..callbacks import (
     ChampionshipActionCallback,
     ChampionshipPageCallback,
-    CalendarActionCallback,
-    ChampionshipCallback
+    ChampionshipCallback,
+    StageCalendarCallback,
 )
 
 from src.drift_bot.core.enums import FileType
-from src.drift_bot.core.domain import Championship, Stage
+from src.drift_bot.core.domain import Championship, Stage, User
 from src.drift_bot.core.services import CRUDService
-from src.drift_bot.core.base import ChampionshipRepository, StageRepository
+from src.drift_bot.core.base import ChampionshipRepository, StageRepository, CRUDRepository
 
 from src.drift_bot.templates import CHAMPIONSHIP_TEMPLATE, STAGE_TEMPLATE
 from src.drift_bot.utils import find_target_file
@@ -115,28 +116,84 @@ async def send_stages_schedule_of_championship(
         callback_data: ChampionshipActionCallback,
         championship_repository: Depends[ChampionshipRepository]
 ) -> None:
-    stages = await championship_repository.get_stages(callback_data.id)
+    championship_id = callback_data.id
+    stages = await championship_repository.get_stages(championship_id)
     dates = [stage.date for stage in stages]
     today = datetime.now()
     calendar_kb = CalendarKeyboard(
         year=today.year,
         month=today.month,
         marked_dates=dates,
-        mark_label="🏁"
+        mark_label="🏁",
+        callback=StageCalendarCallback,
+        championship_id=championship_id
     )
     await call.message.answer(text="📅 Расписание этапов", reply_markup=calendar_kb())
 
 
 @championships_router.callback_query(
-    CalendarActionCallback.filter(F.action == CalendarAction.NEXT)
+    StageCalendarCallback.filter(F.action == CalendarAction.PREVIOUS | F.action == CalendarAction.NEXT)
 )
-async def send_next_stage_schedule_of_championship(
+async def navigate_stage_schedule_of_championship(
         call: CallbackQuery,
-        callback_data: CalendarActionCallback,
+        callback_data: StageCalendarCallback,
         championship_repository: Depends[ChampionshipRepository]
 ) -> None:
-    date = datetime(year=callback_data.year, month=callback_data.month, day=DEFAULT_DAY)
-    # calendar_kb = CalendarKeyboard()
+    championship_id = callback_data.championship_id
+    stages = await championship_repository.get_stages(championship_id)
+    dates = [stage.date for stage in stages]
+    calendar_kb = CalendarKeyboard(
+        year=callback_data.year,
+        month=callback_data.month,
+        marked_dates=dates,
+        mark_label="🏁",
+        callback=StageCalendarCallback,
+        championship_id=championship_id
+    )
+    await call.message.edit_reply_markup(reply_markup=calendar_kb())
+
+
+@championships_router.callback_query(CalendarCallback.filter(F.action == CalendarAction.IGNORE))
+async def handle_ignore_calendar_action(call: CallbackQuery) -> None:
+    await call.answer()
+
+
+@championships_router.callback_query(
+    StageCalendarCallback.filter(F.action == CalendarAction.SELECT)
+)
+async def send_selected_stage_of_championship(
+        call: CallbackQuery,
+        callback_data: StageCalendarCallback,
+        stage_repository: Depends[StageRepository],
+        stage_crud_service: Depends[CRUDService[Stage]],
+        user_repository: Depends[CRUDRepository[User]]
+) -> None:
+    stage = await stage_repository.get_by_date(
+        championship_id=callback_data.championship_id,
+        date=datetime(year=callback_data.year, month=callback_data.month, day=callback_data.day)
+    )
+    if not stage:
+        await call.answer()
+        return
+    _, files = await stage_crud_service.read(stage.id)
+    photo = find_target_file(files, target_type=FileType.PHOTO)
+    text = STAGE_TEMPLATE.format(
+        title=stage.title,
+        description=stage.description,
+        location=stage.location,
+        map_link=stage.map_link,
+        date=stage.date
+    )
+    user = await user_repository.read(call.from_user.id)
+    keyboard = get_stage_actions_kb_by_role(user.role, stage)
+    if photo:
+        await call.message.answer_photo(
+            photo=BufferedInputFile(file=photo.data, filename=photo.file_name),
+            caption=text,
+            reply_markup=keyboard
+        )
+    else:
+        await call.message.answer(text=text, reply_markup=keyboard)
 
 
 @championships_router.callback_query(
@@ -146,7 +203,8 @@ async def send_nearest_stage_of_championship(
         call: CallbackQuery,
         callback_data: ChampionshipActionCallback,
         stage_repository: Depends[StageRepository],
-        stage_crud_service: Depends[CRUDService[Stage]]
+        stage_crud_service: Depends[CRUDService[Stage]],
+        user_repository: Depends[CRUDRepository[User]]
 ) -> None:
     stage = await stage_repository.get_nearest(callback_data.id, date=datetime.now())
     if not stage:
@@ -161,7 +219,8 @@ async def send_nearest_stage_of_championship(
     )
     _, files = await stage_crud_service.read(stage.id)
     photo = find_target_file(files, target_type=FileType.PHOTO)
-    keyboard = ...
+    user = await user_repository.read(call.from_user.id)
+    keyboard = get_stage_actions_kb_by_role(user.role, stage)
     if photo:
         await call.message.answer_photo(
             photo=BufferedInputFile(file=photo.data, filename=photo.file_name),

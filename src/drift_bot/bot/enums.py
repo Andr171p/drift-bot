@@ -7,8 +7,8 @@ class Confirmation(StrEnum):
 
 
 class AdminChampionshipAction(StrEnum):
-    EDIT = "edit"
-    DELETE = "delete"
+    EDIT = "edit"                            # Редактирование чемпионата
+    DELETE = "delete"                        # Удаление чемпионата
     ADD_STAGE = "add_stage"                  # Добавить этап
     TOGGLE_ACTIVATION = "toggle_activation"  # Сделать активным / деактивировать
 
@@ -20,14 +20,14 @@ class ChampionshipAction(StrEnum):
 
 
 class AdminStageAction(StrEnum):
-    DELETE = "delete"
+    DELETE = "delete"                            # Удаление этапа
     TOGGLE_REGISTRATION = "toggle_registration"  # Открыть / закрыть регистрацию
     INVITE_JUDGE = "invite_judge"                # Пригласить судей
 
 
-class CalendarAction(StrEnum):
-    PREVIOUS = "previous"
-    NEXT = "next"
-    TODAY = "today"
-    IGNORE = "ignore"
-    DAY = "day"
+class JudgeStageAction(StrEnum):
+    REGISTRATION = "registration"  # Регистрация на этап
+
+
+class PilotStageAction(StrEnum):
+    REGISTRATION = "registration"  # Регистрация на этап
