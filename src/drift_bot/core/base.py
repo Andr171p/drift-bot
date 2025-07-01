@@ -21,6 +21,10 @@ class CRUDRepository(Generic[T]):
     async def delete(self, id: int | str) -> bool: pass
 
 
+class ParticipantRepository(CRUDRepository[T]):
+    async def get_by_user_and_stage(self, user_id: int, stage_id: int) -> Optional[T]: pass
+
+
 class ChampionshipRepository(CRUDRepository[Championship]):
     async def get_active(self) -> list[ActiveChampionship]: pass
 
@@ -30,21 +34,13 @@ class ChampionshipRepository(CRUDRepository[Championship]):
 
     async def get_stages(self, id: int) -> list[Stage]: pass
 
-    async def get_by_user_id(self, user_id: int) -> list[Championship]: pass
+    async def get_by_user(self, user_id: int) -> list[Championship]: pass
 
 
 class StageRepository(CRUDRepository[Stage]):
     async def get_nearest(self, championship_id: int, date: datetime) -> Optional[Stage]: pass
 
     async def get_by_date(self, championship_id: int, date: datetime) -> Optional[Stage]: pass
-
-
-class PilotRepository(CRUDRepository[Pilot]):
-    async def get_by_user_id(self, user_id: int) -> Optional[Pilot]: pass
-
-
-class JudgeRepository(CRUDRepository[Judge]):
-    async def get_by_user_id(self, user_id: int) -> Optional[Judge]: pass
 
 
 class FileStorage(ABC):

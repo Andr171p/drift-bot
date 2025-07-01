@@ -13,7 +13,7 @@ from ...states import JudgeForm
 from ...filters import FileFilter
 from ...enums import Confirmation, JudgeStageAction
 from ...keyboards import choose_criterion_kb, confirm_kb
-from ...decorators import role_required, show_progress_bar
+from ...decorators import role_required, show_progress_bar, check_participant_registration
 from ...callbacks import (
     JudgeStageActionCallback,
     CriterionChoiceCallback,
@@ -39,11 +39,12 @@ JUDGE_REQUIRED_MESSAGE = "⛔ Этот функционал доступен т�
     JudgeStageActionCallback.filter(F.action == JudgeStageAction.REGISTRATION)
 )
 @role_required(Role.JUDGE, error_message=JUDGE_REQUIRED_MESSAGE)
+@check_participant_registration(Role.JUDGE)
 @show_progress_bar(JudgeForm)
 async def send_judge_registration_form(
         call: CallbackQuery,
         callback_data: JudgeStageActionCallback,
-        state: FSMContext
+        state: FSMContext,
 ) -> None:
     await state.set_state(JudgeForm.stage_id)
     await state.update_data(stage_id=callback_data.id)

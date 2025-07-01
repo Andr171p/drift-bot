@@ -130,16 +130,16 @@ class Judge(BaseModel):
 
 
 class Pilot(BaseModel):
-    user_id: int                                                           # ID пользователя
-    stage_id: int                                                          # ID этапа в котором принимает участие пилот
-    full_name: str                                                         # ФИО пилота
-    age: int                                                               # Возраст пилота
-    description: str                                                       # Описание пилота (о нём и его машине, полезная информация для комментатора)
-    team: Optional[str] = None                                             # Название команды, если пилот выступает в командном зачёте
-    files: list[Optional[FileMetadata]] = Field(default_factory=list)      # Фото пилота или его авто
-    drift_car: Car                                                         # Авто на котором пилот принимает участие
-    technical_car: Optional[Car] = None                                    # Технический авто для тех-парка
-    number: int                                                            # Номер пилота получаемый при регистрации
+    user_id: int                                                       # ID пользователя
+    stage_id: int                                                      # ID этапа в котором принимает участие пилот
+    full_name: str                                                     # ФИО пилота
+    age: int                                                           # Возраст пилота
+    description: str                                                   # Описание пилота (о нём и его машине, полезная информация для комментатора)
+    team: Optional[str] = None                                         # Название команды, если пилот выступает в командном зачёте
+    files: list[Optional[FileMetadata]] = Field(default_factory=list)  # Фото пилота или его авто
+    drift_car: Car                                                     # Авто на котором пилот принимает участие
+    technical_car: Optional[Car] = None                                # Технический авто для тех-парка
+    number: int                                                        # Номер пилота получаемый при регистрации
 
     model_config = ConfigDict(from_attributes=True)
 

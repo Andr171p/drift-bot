@@ -43,7 +43,10 @@ async def send_my_championships(
         for my_championship in my_championships:
             championship, files = await championship_crud_service.read(my_championship.id)
             photo = next((file for file in files if file.type == FileType.PHOTO), None)
-            keyboard = admin_championship_actions_kb(id=championship.id, is_active=championship.is_active)
+            keyboard = admin_championship_actions_kb(
+                championship_id=championship.id,
+                is_active=championship.is_active
+            )
             text = CHAMPIONSHIP_TEMPLATE.format(
                 title=championship.title,
                 description=championship.description,
@@ -100,7 +103,7 @@ async def toggle_championship_activation(
         updated_championship = await championship_repository.update(callback_data.id, is_active=is_active)
         await call.message.edit_reply_markup(
             reply_markup=admin_championship_actions_kb(
-                id=updated_championship.id,
+                championship_id=updated_championship.id,
                 is_active=updated_championship.is_active
             )
         )
